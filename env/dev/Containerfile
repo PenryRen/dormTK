@@ -1,0 +1,31 @@
+FROM ubuntu:22.04
+
+#设置apt非交互模式
+ENV DEBIAN_FRONTEND=noninteractive
+#设置zsh终端
+ENV ZSH_CUSTOM=/root/.oh-my-zsh/custom
+ENV TERM=xterm-256color
+ENV COLORTERM=truecolor
+#配置rust
+ENV RUST_VERSION=1.95.0
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH=$CARGO_HOME/bin:$PATH
+#安装基础软件包
+RUN apt-get update && apt-get install -y \
+    zsh git curl fonts-powerline build-essential pkg-config libssl-dev vim fzf tmux \
+    && rm -rf /var/lib/apt/lists/*
+
+#安装指定版本rust
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VERSION
+#安装cargo-watch
+RUN cargo install cargo-watch
+# 安装 Oh My Zsh
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# 配置zsh插件
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting && \
+    git clone https://github.com/zsh-users/zsh-completions $ZSH_CUSTOM/plugins/zsh-completions
+# 配置 zshrc
+RUN sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions)/' ~/.zshrc
+WORKDIR /app
+CMD ["zsh", "-l"]
