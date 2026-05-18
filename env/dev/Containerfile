@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VERSION
 #安装cargo-watch
 RUN cargo install cargo-watch
+#安装sqlx-cli
+RUN cargo install sqlx-cli --no-default-features --features postgres,rustls
 # 安装 Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 # 配置zsh插件
