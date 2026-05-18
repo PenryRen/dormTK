@@ -21,13 +21,10 @@ services:
     image: postgres:15
     container_name: postgres-dev
     environment:
-      POSTGRES_USER: devuser
-      POSTGRES_PASSWORD: devpass
-      POSTGRES_DB: devdb
+      POSTGRES_USER: dormtk
+      POSTGRES_PASSWORD: dormtk
+      POSTGRES_DB: dormtk
     ports:
-      - "5432:5432"  # PostgreSQL 默认端口
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data  # 持久化数据
-
-volumes:
-  pgdata:
+      - ./PostgreSQL/data:/var/lib/postgresql/data
