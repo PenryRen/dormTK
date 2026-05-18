@@ -1,0 +1,6 @@
+#忽略cargo缓存
+.cargo_cache/*
+#忽略构建产物
+app/target/*
+#忽略MAC随地大小便
+.DS_Store
