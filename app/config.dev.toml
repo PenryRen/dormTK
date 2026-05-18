@@ -1,0 +1,5 @@
+# config.dev.toml
+db_port = 5432
+db_name = "dormtk"
+db_user = "dormtk"
+db_password = "dormtk"

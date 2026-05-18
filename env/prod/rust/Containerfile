@@ -1,0 +1,20 @@
+FROM rust:1.95 as builder
+
+WORKDIR /app
+COPY ../../app/Cargo.toml ../../app/Cargo.lock ./
+COPY ../../app/src ./src
+
+RUN cargo build --release
+
+# 生产镜像
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8
+
+WORKDIR /app
+
+COPY --from=builder /app/target/release/dormtk /app/src/config.prod.toml ./
+
+USER 1000
+
+EXPOSE 8080
+
+CMD ["./dormtk"]

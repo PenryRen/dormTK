@@ -3,6 +3,6 @@
 #忽略构建产物
 app/target/
 #忽略数据库数据目录
-env/PostgreSQL/data/
+env/dev/PostgreSQL/data/
 #忽略MAC随地大小便
 .DS_Store
