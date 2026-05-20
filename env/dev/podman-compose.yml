@@ -3,11 +3,11 @@ version: "3.9"
 services:
   dormtk-dev:
     build:
-      context: ./rust
-      dockerfile: containerfile
+      context: ./backend
+      dockerfile: Containerfile
     container_name: dormTK-dev
     volumes:
-      - ../.././app:/app
+      - ../../backend:/app
       - ../../.cargo_cache/registry:/usr/local/cargo/registry
       - ../../.cargo_cache/git:/usr/local/cargo/git
     environment:

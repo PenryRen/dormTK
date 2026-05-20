@@ -1,0 +1,12 @@
+[package]
+name = "dormtk-admin-desktop"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dormtk-api-types = { path = "../../crates/dormtk-api-types" }
+dormtk-core = { path = "../../crates/dormtk-core" }
+slint = "1"
+
+[build-dependencies]
+slint-build = "1"

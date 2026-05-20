@@ -1,4 +1,5 @@
 # config.dev.toml
+db_host = "db"
 db_port = 5432
 db_name = "dormtk"
 db_user = "dormtk"

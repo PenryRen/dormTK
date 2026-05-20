@@ -1,109 +1,119 @@
-# 一.项目介绍
-(占位符,以后再写喵)
+# dormTK
 
-# 二.项目结构
-~~~
+dormTK 是一个多端项目，当前规划为 Rust 后端服务、Rust + Slint 管理端原生应用、微信小程序客户端，以及一套后端容器化开发/部署环境。
+
+## 项目结构
+
+```text
 .
-├── README.md --------------------------说明文档
-├── app --------------------------------程序目录
-│   ├── Cargo.lock
+├── backend/                         # Rust 后端服务
 │   ├── Cargo.toml
-│   ├── config.dev.toml ----------------开发环境配置文件
-│   ├── config.prod.toml ---------------生产环境配置文件
-│   └── src ----------------------------代码目录
-│ 
-└── env --------------------------------容器环境目录
-    ├── dev ----------------------------开发环境目录
-    │   ├── PostgreSQL -----------------PostgreSQL数据库目录
-    │   ├── init.sh --------------------开发容器环境初始化脚本
-    │   ├── podman-compose.yml ---------开发容器环境编排文件
-    │   └── rust -----------------------rust开发镜像目录
-    └── prod ---------------------------生产环境目录
-        ├── PostgreSQL -----------------PostgreSQL数据库目录
-        ├── podman-compose.yml ---------生产环境编排文件
-        └── rust -----------------------rust生产镜像目录
-~~~
+│   ├── config/
+│   │   ├── dev.toml
+│   │   └── prod.example.toml
+│   └── src/
+│
+├── clients/
+│   ├── admin-desktop/               # Rust + Slint 管理端原生应用
+│   │   ├── Cargo.toml
+│   │   ├── build.rs
+│   │   ├── src/
+│   │   └── ui/
+│   │
+│   └── weapp/                       # 微信小程序客户端
+│       ├── project.config.json
+│       └── miniprogram/
+│
+├── crates/                          # Rust 共享库
+│   ├── dormtk-api-types/            # 后端与管理端共享 API 类型
+│   └── dormtk-core/                 # 纯业务类型与通用枚举
+│
+├── shared/
+│   └── openapi/
+│       └── openapi.yaml             # 跨语言 API 契约，供小程序生成类型
+│
+├── env/
+│   ├── dev/                         # 本地容器开发环境
+│   │   ├── backend/Containerfile
+│   │   ├── podman-compose.yml
+│   │   └── PostgreSQL/
+│   │
+│   └── prod/                        # 生产后端与数据库部署环境
+│       ├── backend/Containerfile
+│       ├── podman-compose.yml
+│       └── PostgreSQL/
+│
+├── docs/                            # 架构、API、部署文档
+├── scripts/                         # 常用开发/构建脚本
+├── Cargo.toml                       # Rust workspace
+├── Cargo.lock
+└── README.md
+```
 
-# 三.快速开始
-0.准备依赖环境
----
-~~~
+## 开发环境
+
+依赖：
+
+```text
 podman >= 5.8.0
 podman-compose >= 1.5.0
-~~~
-安装方式见[Podman Installation Instructions](https://podman.io/docs/installation)
+```
 
-1.克隆项目到本地
----
-~~~ bash
-git clone https://github.com/PenryRen/dormTK.git
-~~~
-使用git将仓库拉取到本地
+启动后端开发容器和 PostgreSQL：
 
-2.配置生产环境变量
----
-在 `./dormTK/env/prod`下建立`.env`文件,并配置数据库密码
-~~~ bash
-# 数据库连接信息
-DB_HOST=db                         # Compose 服务名或容器内部名称
-DB_PORT=5432                       # PostgreSQL 默认端口
-DB_NAME=dormtk                     # 数据库名称
-DB_USER=dormtk                     # 数据库账号
-DB_PASSWORD=super-secret-password  # 数据库密码
-~~~
-之后编辑
-~~~ bash
-./dormTK/app/config.prod.toml
-~~~
-完成数据库配置
-~~~ toml
-# config.prod.toml
-db_host = "db"
-db_port = 5432
-db_name = "dormtk"
-db_user = "dormtk"
-db_password = "super-secret-password"
-~~~
-之后在`./dormTK/env/prod`目录下运行
-~~~ bash
-podman-compose up -d
-~~~
-完成部署
+```bash
+./scripts/dev-backend.sh
+```
 
+进入后端开发容器：
 
-# 四.开发环境配置
-0.准备依赖环境
----
-~~~
-podman >= 5.8.0
-podman-compose >= 1.5.0
-~~~
-安装方式见[Podman Installation Instructions](https://podman.io/docs/installation)
+```bash
+podman exec -it dormTK-dev zsh
+```
 
-1.克隆项目到本地
----
-~~~ bash
-git clone https://github.com/PenryRen/dormTK.git
-~~~
-使用git将仓库拉取到本地
+启动 Slint 管理端：
 
-2.初始化开发环境
----
-切换到开发环境目录
-~~~ bash
-cd ./dormTK/env
-~~~
-使用脚本构建并进入开发容器
-~~~ bash
-./init.sh
-~~~
----
-本开发环境基于容器化,使用Ubuntu22为基本镜像构建.  
-也可以使用以下指令手动构建镜像
-~~~ bash
-cd ./dormTK/env && podman-compose up -d --build
-~~~
-附加终端到容器
-~~~ bash
-podman exec -it dormTK-dev zsh 
-~~~
+```bash
+./scripts/dev-admin.sh
+```
+
+微信小程序使用微信开发者工具打开：
+
+```text
+clients/weapp
+```
+
+## 生产部署
+
+生产容器只包含后端服务和 PostgreSQL。管理端原生应用按系统单独打包分发，小程序通过微信开发者工具上传。
+
+在 `env/prod` 下创建 `.env`：
+
+```bash
+cp env/prod/.env.example env/prod/.env
+```
+
+编辑数据库变量：
+
+```dotenv
+DB_NAME=dormtk
+DB_USER=dormtk
+DB_PASSWORD=change-me
+```
+
+启动生产环境：
+
+```bash
+cd env/prod
+podman-compose up -d --build
+```
+
+## API 契约
+
+跨端接口契约放在：
+
+```text
+shared/openapi/openapi.yaml
+```
+
+Rust 后端和 Slint 管理端优先共享 `crates/dormtk-api-types` 中的类型；微信小程序通过 OpenAPI 生成或对照 TypeScript 类型。
