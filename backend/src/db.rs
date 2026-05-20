@@ -1,5 +1,5 @@
 use crate::error::ApiError;
-use serde::de::DeserializeOwned;
+use serde::{Serialize, de::DeserializeOwned};
 use sqlx::Row;
 
 pub fn text(row: &sqlx::postgres::PgRow, name: &str) -> Result<String, sqlx::Error> {
@@ -25,4 +25,21 @@ pub fn validate_non_empty(value: &str, field: &str) -> Result<(), ApiError> {
     }
 
     Ok(())
+}
+
+pub fn enum_string<T>(value: T) -> Result<String, ApiError>
+where
+    T: Serialize,
+{
+    serde_json::to_value(value)
+        .ok()
+        .and_then(|value| value.as_str().map(ToOwned::to_owned))
+        .ok_or_else(|| ApiError::internal("failed to serialize enum"))
+}
+
+pub fn optional_enum_string<T>(value: Option<T>) -> Result<Option<String>, ApiError>
+where
+    T: Serialize,
+{
+    value.map(enum_string).transpose()
 }

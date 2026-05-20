@@ -1,6 +1,6 @@
 use crate::{
     auth::{AuthUser, encode_token, hash_password, verify_password},
-    db::{enum_value, opt_text, text, validate_non_empty},
+    db::{enum_string, enum_value, opt_text, optional_enum_string, text, validate_non_empty},
     error::ApiError,
     http::{ApiJson, PageJson, Pagination, data, page, pagination},
     state::AppState,
@@ -623,21 +623,4 @@ async fn replace_role_permissions_inner(
 
     tx.commit().await?;
     Ok(())
-}
-
-fn enum_string<T>(value: T) -> Result<String, ApiError>
-where
-    T: serde::Serialize,
-{
-    serde_json::to_value(value)
-        .ok()
-        .and_then(|value| value.as_str().map(ToOwned::to_owned))
-        .ok_or_else(|| ApiError::internal("failed to serialize enum"))
-}
-
-fn optional_enum_string<T>(value: Option<T>) -> Result<Option<String>, ApiError>
-where
-    T: serde::Serialize,
-{
-    value.map(enum_string).transpose()
 }
