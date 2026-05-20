@@ -43,7 +43,7 @@ dormTK 是一个多端项目，当前规划为 Rust 后端服务、Rust + Slint 
 │       ├── podman-compose.yml
 │       └── PostgreSQL/
 │
-├── docs/                            # 架构、API、部署文档
+├── docs/                            # 领域、架构、API、部署文档
 ├── scripts/                         # 常用开发/构建脚本
 ├── Cargo.toml                       # Rust workspace
 ├── Cargo.lock
