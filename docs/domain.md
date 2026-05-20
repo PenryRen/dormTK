@@ -20,7 +20,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 
 规则：
 - 系统管理员权限最高，应尽量少量配置
-- 系统管理员可以跨班级处理业务数据，不受 TeacherClassAssignment 限制
+- 系统管理员可以跨班级处理业务数据，不受 TeacherClassAssignment 限制；这只表示管理权限可以跨班级，不表示住宿允许跨班级
 - 删除角色前，必须确认没有用户正在使用该角色
 - 权限变更应记录操作人、操作时间和变更内容
 
@@ -140,7 +140,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - 一个寝室同一时间只归属一个班级
 - 学生只能分配到本人班级归属的寝室
 - 班级只能归属或使用同性别寝室
-- 教师或辅导员查看范围通常按班级授权
+- 教师或辅导员查看范围按 TeacherClassAssignment 授权的班级确定
 
 ### TeacherClassAssignment
 
@@ -278,7 +278,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - student_id 必须指向学生身份
 - duty_type 表示班长、查寝执行人或卫生检查执行人等职责
 - scope_type 可以是 room、class、building、task
-- 班长职责范围通常是本人所属班级
+- 班长职责范围必须是本人所属班级，不能配置为其他班级
 - 查寝执行人和卫生检查执行人职责本身不设置有效期
 - 具体任务分配提供本次任务的执行范围，不能替代学生职责
 - 班长职责只提供班级范围内的查看和协助管理能力，不提供任务执行能力
@@ -372,6 +372,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - result
 - abnormal_reason
 - evidence_source
+- evidence_ref_id
 - leave_request_id
 - checked_by
 - checked_at
@@ -379,13 +380,70 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 规则：
 - 同一任务中，一个学生只能有一条查寝记录
 - 学生执行人只能手动标记异常，不能手动标记在寝
+- 学生执行人可以通过扫描学生小程序展示的查寝二维码，将查寝记录确认为在寝；这属于二维码证据确认，不属于人工手动标记在寝
 - 老师和系统管理员也不应仅凭人工操作直接标记在寝；在寝结果应来自签到、二维码或其他可信证据
 - 查寝结果为 abnormal 时，必须填写异常原因
 - 查寝时间落在已批准请假时间段内时，查寝结果应标记为 leave，并关联 leave_request_id
 - result 为 present 时，必须有 evidence_source，例如当日有效在寝签到记录或查寝二维码记录
+- result 为 present 且 evidence_source 为 qr_code 时，evidence_ref_id 应关联 DormInspectionQrScan
 - result 为 abnormal 时，可以来自执行人手动标记，也可以来自寝室检查完成后的自动标记
 - abnormal 结果允许学生在 checked_at 后三天内提交原因说明和图片进行申诉
 - checked_by 可以是老师，也可以是被分配该任务的学生执行人
+
+### DormInspectionQrToken
+
+查寝二维码令牌表示学生小程序为某次查寝展示的一次性或短时有效二维码。
+
+字段：
+- id
+- task_id
+- inspection_record_id
+- student_id
+- room_id
+- token_hash
+- issued_at
+- expires_at
+- used_at
+- status
+
+规则：
+- 只有任务范围内、当前有 active Accommodation 且存在 unknown 查寝记录的学生可以生成查寝二维码
+- 二维码必须由服务端签发，学生小程序只负责展示，不应由前端自行拼接可信业务数据
+- 二维码应短时有效，过期后必须重新生成
+- token_hash 用于服务端校验二维码，不保存明文 token
+- 二维码只能用于对应 task_id、student_id、room_id 的查寝确认
+- 二维码被成功扫描后应标记为 used，防止重复使用
+- 如果学生已被标记为 leave、present 或 abnormal，默认不再生成新的可用二维码
+- 如果查寝时间落在已批准请假时间段内，应优先标记为 leave，不应通过二维码改为 present
+
+### DormInspectionQrScan
+
+查寝二维码扫描记录表示执行人通过微信小程序扫描学生二维码后的核验结果。
+
+字段：
+- id
+- qr_token_id
+- task_assignment_id
+- task_id
+- inspection_record_id
+- student_id
+- room_id
+- executor_type
+- executor_id
+- scanned_at
+- scan_result
+- reject_reason
+
+规则：
+- 只有被分配该学生或该寝室查寝任务的执行人可以提交扫码结果
+- 执行人必须具备 inspection_executor 职责，或是被分配该任务的老师
+- task_assignment_id 记录本次扫码使用的任务分配，便于区分老师执行和学生执行
+- executor_type 表示 teacher 或 student，executor_id 对应执行人身份 ID
+- 扫码时必须校验二维码有效期、任务状态、执行人任务分配、学生当前住宿寝室和查寝记录状态
+- 扫码成功后，将对应 DormInspectionRecord 从 unknown 更新为 present
+- 扫码成功时，DormInspectionRecord.evidence_source 记为 qr_code，evidence_ref_id 关联本次 DormInspectionQrScan
+- 扫码只能确认在寝，不能用于请假审批，也不能覆盖已存在的 leave、present 或 abnormal 结果
+- 扫码失败应保留失败原因，便于排查过期二维码、越权扫码或学生寝室不匹配等问题
 
 ### InspectionAbnormalAppeal
 
@@ -444,8 +502,9 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - location: 校园网或定位辅助
 
 规则：
+- 二维码查寝流程为：学生小程序请求查寝二维码，服务端签发短时有效令牌，执行人小程序扫码提交，服务端校验后将该学生查寝结果标记为 present
 - 二维码查寝应有有效期
-- 过期二维码不能继续签到
+- 过期二维码不能继续用于查寝确认
 - 人工查寝只能用于记录异常，不能作为在寝证明
 - 人工查寝需要记录执行人
 
@@ -756,6 +815,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - class_monitor 职责不能作为任务执行职责
 - 执行人只能处理分配给自己的任务，系统管理员和任务创建人除外
 - 学生执行人必须同时满足任务分配和职责范围要求
+- TaskAssignment.status 使用 TaskAssignmentStatus，表示某个执行人的本次任务进度，不等同于任务整体状态
 - 任务完成后，分配状态应变为 completed
 
 ## 审计与日志
@@ -932,6 +992,13 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - completed: 已完成
 - cancelled: 已取消
 
+### TaskAssignmentStatus
+
+- assigned: 已分配
+- processing: 执行中
+- completed: 已完成
+- cancelled: 已取消
+
 ### InspectionResult
 
 - present: 证据确认在寝
@@ -942,10 +1009,22 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 ### InspectionEvidenceSource
 
 - check_in: 当日在寝签到
-- qr_code: 查寝二维码
+- qr_code: 执行人扫描学生小程序展示的查寝二维码
 - manual_abnormal: 执行人手动标记异常
 - inspection_room_completed: 寝室检查完成后自动标记异常
 - other_verified: 其他已验证证据
+
+### InspectionQrTokenStatus
+
+- active: 可使用
+- used: 已使用
+- expired: 已过期
+- revoked: 已作废
+
+### InspectionQrScanResult
+
+- accepted: 扫码通过
+- rejected: 扫码拒绝
 
 ### InspectionAbnormalAppealType
 
@@ -1001,6 +1080,11 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - active: 生效
 - disabled: 停用
 
+### FileCleanupAction
+
+- physical_delete: 到期后物理删除文件
+- archive_then_delete: 先归档再删除原始文件
+
 ### HygieneLevel
 
 - excellent: 优秀
@@ -1025,6 +1109,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - 学生住宿分配和退宿
 - 管理端登录
 - 查寝任务创建、分配、执行、结果查询
+- 学生查寝二维码生成和执行人扫码确认在寝
 - 卫生检查任务创建、评分、结果查询
 - 卫生评分模板和评分项管理
 - 班长查看授权范围内的寝室管理信息、卫生评分明细和照片
@@ -1049,7 +1134,7 @@ dormTK 是宿舍管理系统，核心目标是管理学生宿舍，并支持日�
 - 日常签到和查寝任务都用于判断学生是否在寝；两者都有结果时，优先采纳查寝任务结果。
 - 查寝执行人提交寝室检查完成后，该寝室内仍未确认的学生自动标记为异常。
 - 查寝执行人只能人工标记异常，不能人工标记在寝。
-- 在寝结果必须来自签到、二维码或其他可信证据。
+- 查寝执行人可以通过扫描学生小程序展示的查寝二维码确认在寝；在寝结果必须来自签到、二维码或其他可信证据。
 - 查寝时间落在已批准请假的时间段内时，查寝结果标记为请假。
 - 被标记为异常的学生，可以在异常标记后三天内提交原因说明和图片。
 - 查寝异常申诉经老师或系统管理员审核通过后，根据申诉类型将原结果修正为请假或在寝。
