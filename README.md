@@ -143,9 +143,9 @@ Rust 后端和 Slint 管理端优先共享 `crates/dormtk-api-types` 中的类�
 - [x] 完成领域模型草案：`docs/domain.md`
 - [x] 完成数据库表草案：`docs/schema.md`
 - [x] 完成 API 草案：`docs/api.md`
-- [ ] 将 API 草案整理为 `shared/openapi/openapi.yaml`
-- [ ] 将核心枚举同步到 `crates/dormtk-core`
-- [ ] 将 API 请求/响应类型同步到 `crates/dormtk-api-types`
+- [x] 将 API 草案整理为 `shared/openapi/openapi.yaml`
+- [x] 将核心枚举同步到 `crates/dormtk-core`
+- [x] 将 API 请求/响应类型同步到 `crates/dormtk-api-types`
 
 #### P1 后端基础设施
 
