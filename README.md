@@ -149,13 +149,13 @@ Rust 后端和 Slint 管理端优先共享 `crates/dormtk-api-types` 中的类�
 
 #### P1 后端基础设施
 
-- [ ] 选择并接入数据库迁移方案，优先使用 `sqlx` migrations
-- [ ] 创建第一批 PostgreSQL migration
-- [ ] 实现后端配置加载和环境区分
-- [ ] 实现数据库连接池
-- [ ] 统一 API 错误响应格式
-- [ ] 实现健康检查和基础日志
-- [ ] 搭建认证 token 骨架
+- [x] 选择并接入数据库迁移方案，优先使用 `sqlx` migrations
+- [x] 创建第一批 PostgreSQL migration
+- [x] 实现后端配置加载和环境区分
+- [x] 实现数据库连接池
+- [x] 统一 API 错误响应格式
+- [x] 实现健康检查和基础日志
+- [x] 搭建认证 token 骨架
 
 #### P2 基础资料管理
 
