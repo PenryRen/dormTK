@@ -39,12 +39,95 @@ pub mod auth {
     pub struct LoginUser {
         pub id: Id,
         pub username: String,
+        pub role_ids: Vec<Id>,
+        pub roles: Vec<String>,
     }
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct LoginResponse {
         pub access_token: String,
         pub user: LoginUser,
+    }
+}
+
+pub mod access {
+    use super::*;
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct User {
+        pub id: Id,
+        pub username: String,
+        pub phone: Option<String>,
+        pub status: UserStatus,
+        pub last_login_at: Option<DateTimeString>,
+        pub created_at: Option<DateTimeString>,
+        pub updated_at: Option<DateTimeString>,
+        pub role_ids: Vec<Id>,
+        pub roles: Vec<Role>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct UserCreate {
+        pub username: String,
+        pub password: String,
+        pub phone: Option<String>,
+        pub status: Option<UserStatus>,
+        pub role_ids: Option<Vec<Id>>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct UserUpdate {
+        pub username: Option<String>,
+        pub password: Option<String>,
+        pub phone: Option<String>,
+        pub status: Option<UserStatus>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct Role {
+        pub id: Id,
+        pub name: String,
+        pub code: String,
+        pub description: Option<String>,
+        pub permission_ids: Vec<Id>,
+        pub permissions: Vec<Permission>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct RoleUpsert {
+        pub name: String,
+        pub code: String,
+        pub description: Option<String>,
+        pub permission_ids: Option<Vec<Id>>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct Permission {
+        pub id: Id,
+        pub code: String,
+        pub description: Option<String>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct PermissionUpsert {
+        pub code: String,
+        pub description: Option<String>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct RoleIdsRequest {
+        pub role_ids: Vec<Id>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct PermissionIdsRequest {
+        pub permission_ids: Vec<Id>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct ImportJobCreate {
+        pub import_type: String,
+        pub file_object_id: Id,
     }
 }
 
