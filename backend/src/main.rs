@@ -1,14 +1,20 @@
 mod config;
+mod error;
+mod routes;
 mod state;
 
-use axum::Router;
 use config::AppConfig;
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use tokio::net::TcpListener;
+use tower_http::trace::TraceLayer;
+use tracing::info;
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    init_tracing();
+
     let config = AppConfig::load()?;
     let db = PgPoolOptions::new()
         .max_connections(5)
@@ -17,10 +23,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = config.server.socket_addr()?;
 
     let state = AppState { config, db };
-    let app = Router::new().with_state(state);
+    let app = routes::router()
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
     let listener = TcpListener::bind(addr).await?;
 
+    info!(%addr, "dormtk backend listening");
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+fn init_tracing() {
+    tracing_subscriber::registry()
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 }
