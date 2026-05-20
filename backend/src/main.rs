@@ -1,6 +1,9 @@
+mod access;
 mod auth;
 mod config;
+mod db;
 mod error;
+mod http;
 mod routes;
 mod state;
 

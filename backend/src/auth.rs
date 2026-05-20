@@ -1,4 +1,8 @@
 use crate::{config::JwtConfig, error::ApiError, state::AppState};
+use argon2::{
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    password_hash::{SaltString, rand_core::OsRng},
+};
 use axum::{
     extract::FromRequestParts,
     http::{header::AUTHORIZATION, request::Parts},
@@ -69,6 +73,24 @@ pub fn decode_token(token: &str, config: &JwtConfig) -> Result<AuthUser, ApiErro
     })
 }
 
+pub fn hash_password(password: &str) -> Result<String, ApiError> {
+    let salt = SaltString::generate(&mut OsRng);
+    let hash = Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|error| ApiError::internal(format!("password hash error: {error}")))?;
+
+    Ok(hash.to_string())
+}
+
+pub fn verify_password(password: &str, password_hash: &str) -> Result<bool, ApiError> {
+    let parsed_hash = PasswordHash::new(password_hash)
+        .map_err(|error| ApiError::internal(format!("password hash parse error: {error}")))?;
+
+    Ok(Argon2::default()
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .is_ok())
+}
+
 fn bearer_token(parts: &Parts) -> Result<&str, ApiError> {
     let header = parts
         .headers
@@ -112,5 +134,13 @@ mod tests {
         let config = test_config();
 
         assert!(decode_token("not-a-token", &config).is_err());
+    }
+
+    #[test]
+    fn password_hash_verifies_matching_password() {
+        let hash = hash_password("secret").expect("password should hash");
+
+        assert!(verify_password("secret", &hash).expect("password should verify"));
+        assert!(!verify_password("other", &hash).expect("password should verify"));
     }
 }
