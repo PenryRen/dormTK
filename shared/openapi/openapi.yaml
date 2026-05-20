@@ -39,7 +39,7 @@ paths:
                     type: string
                     const: ok
 
-  /api/admin/auth/login:
+  /api/auth/login:
     post:
       tags: [Admin Auth]
       summary: Admin login
@@ -57,6 +57,217 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponseEnvelope"
+
+  /api/admin/users:
+    get:
+      tags: [Admin Auth]
+      summary: List users
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: User page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPageResponse"
+    post:
+      tags: [Admin Auth]
+      summary: Create user
+      requestBody:
+        $ref: "#/components/requestBodies/UserCreateBody"
+      responses:
+        "200":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/admin/users/{id}:
+    get:
+      tags: [Admin Auth]
+      summary: Get user
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: User detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    patch:
+      tags: [Admin Auth]
+      summary: Update user
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/UserUpdateBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/admin/users/{id}/roles:
+    put:
+      tags: [Admin Auth]
+      summary: Replace user roles
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/RoleIdsBody"
+      responses:
+        "200":
+          description: Updated user roles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  /api/admin/roles:
+    get:
+      tags: [Admin Auth]
+      summary: List roles
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Role page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolePageResponse"
+    post:
+      tags: [Admin Auth]
+      summary: Create role
+      requestBody:
+        $ref: "#/components/requestBodies/RoleUpsertBody"
+      responses:
+        "200":
+          description: Created role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/admin/roles/{id}:
+    get:
+      tags: [Admin Auth]
+      summary: Get role
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Role detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+    patch:
+      tags: [Admin Auth]
+      summary: Update role
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/RoleUpsertBody"
+      responses:
+        "200":
+          description: Updated role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/admin/roles/{id}/permissions:
+    put:
+      tags: [Admin Auth]
+      summary: Replace role permissions
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionIdsBody"
+      responses:
+        "200":
+          description: Updated role permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+
+  /api/admin/permissions:
+    get:
+      tags: [Admin Auth]
+      summary: List permissions
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Permission page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionPageResponse"
+    post:
+      tags: [Admin Auth]
+      summary: Create permission
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionUpsertBody"
+      responses:
+        "200":
+          description: Created permission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+  /api/admin/permissions/{id}:
+    get:
+      tags: [Admin Auth]
+      summary: Get permission
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Permission detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+    patch:
+      tags: [Admin Auth]
+      summary: Update permission
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionUpsertBody"
+      responses:
+        "200":
+          description: Updated permission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+
+  /api/admin/import-jobs:
+    post:
+      tags: [Admin Basics]
+      summary: Reserve basic data import
+      description: P2 only reserves the API contract. CSV and Excel parsing are not implemented.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportJobCreate"
+      responses:
+        "501":
+          description: Import parsing is not implemented in P2
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/admin/students:
     get:
@@ -1515,6 +1726,42 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/FileRelationRequest"
+    UserCreateBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserCreate"
+    UserUpdateBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserUpdate"
+    RoleUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RoleUpsert"
+    PermissionUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PermissionUpsert"
+    RoleIdsBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RoleIdsRequest"
+    PermissionIdsBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PermissionIdsRequest"
   schemas:
     ApiResponse:
       type: object
@@ -1674,6 +1921,106 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/LoginResponse"
+
+    User:
+      type: object
+      required: [id, username, status, role_ids, roles]
+      properties:
+        id: { type: string }
+        username: { type: string }
+        phone: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        last_login_at: { type: string, nullable: true }
+        created_at: { type: string, nullable: true }
+        updated_at: { type: string, nullable: true }
+        role_ids:
+          type: array
+          items: { type: string }
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+    UserCreate:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+        phone: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        role_ids:
+          type: array
+          items: { type: string }
+    UserUpdate:
+      type: object
+      properties:
+        username: { type: string }
+        password: { type: string }
+        phone: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+    Role:
+      type: object
+      required: [id, name, code, permission_ids, permissions]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        code: { type: string }
+        description: { type: string, nullable: true }
+        permission_ids:
+          type: array
+          items: { type: string }
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+    RoleUpsert:
+      type: object
+      required: [name, code]
+      properties:
+        name: { type: string }
+        code: { type: string }
+        description: { type: string, nullable: true }
+        permission_ids:
+          type: array
+          items: { type: string }
+    Permission:
+      type: object
+      required: [id, code]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        description: { type: string, nullable: true }
+    PermissionUpsert:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string }
+        description: { type: string, nullable: true }
+    RoleIdsRequest:
+      type: object
+      required: [role_ids]
+      properties:
+        role_ids:
+          type: array
+          items: { type: string }
+    PermissionIdsRequest:
+      type: object
+      required: [permission_ids]
+      properties:
+        permission_ids:
+          type: array
+          items: { type: string }
+    ImportJobCreate:
+      type: object
+      required: [import_type, file_object_id]
+      properties:
+        import_type:
+          type: string
+          enum: [students, classes, buildings, rooms, accommodations, duties]
+        file_object_id: { type: string }
 
     Student:
       type: object
@@ -2439,6 +2786,30 @@ components:
       type: object
       required: [data]
       properties: { data: { $ref: "#/components/schemas/Student" } }
+    UserResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/User" } }
+    UserPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/User" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    RoleResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Role" } }
+    RolePageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Role" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    PermissionResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Permission" } }
+    PermissionPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Permission" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
     StudentPageResponse:
       type: object
       required: [data, meta]
