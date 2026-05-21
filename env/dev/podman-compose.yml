@@ -7,7 +7,7 @@ services:
       dockerfile: Containerfile
     container_name: dormTK-dev
     volumes:
-      - ../../backend:/app
+      - ../../:/app
       - ../../.cargo_cache/registry:/usr/local/cargo/registry
       - ../../.cargo_cache/git:/usr/local/cargo/git
     environment:
