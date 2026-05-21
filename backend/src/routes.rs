@@ -1,4 +1,4 @@
-use crate::{access, basics, duties, error::ApiError, state::AppState};
+use crate::{access, basics, duties, error::ApiError, inspection, state::AppState};
 use axum::{Json, Router, extract::State, routing::get};
 use serde::Serialize;
 
@@ -8,6 +8,7 @@ pub fn router() -> Router<AppState> {
         .merge(access::routes())
         .merge(basics::routes())
         .merge(duties::routes())
+        .merge(inspection::routes())
 }
 
 #[derive(Debug, Serialize)]

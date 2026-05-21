@@ -6,6 +6,7 @@ mod db;
 mod duties;
 mod error;
 mod http;
+mod inspection;
 mod routes;
 mod state;
 
