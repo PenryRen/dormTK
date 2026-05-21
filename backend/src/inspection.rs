@@ -11,8 +11,9 @@ use axum::{
     routing::{get, patch, post},
 };
 use dormtk_api_types::inspection::{
-    DormInspectionQrToken, DormInspectionRecord, DormInspectionTask, DormInspectionTaskCreate,
-    DormInspectionTaskUpdate, InspectionAbnormalRequest,
+    DormInspectionQrScan, DormInspectionQrScanSubmit, DormInspectionQrToken, DormInspectionRecord,
+    DormInspectionTask, DormInspectionTaskCreate, DormInspectionTaskUpdate,
+    InspectionAbnormalRequest,
 };
 use dormtk_core::{
     Id, InspectionEvidenceSource, InspectionMethod, InspectionResult, ScopeType, TaskStatus,
@@ -60,6 +61,26 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/api/student/inspection-qr-tokens/{id}/refresh",
             post(refresh_my_qr_token),
+        )
+        .route(
+            "/api/student/inspection-execution/tasks",
+            get(list_execution_tasks),
+        )
+        .route(
+            "/api/student/inspection-execution/tasks/{task_id}",
+            get(get_execution_task),
+        )
+        .route(
+            "/api/student/inspection-execution/tasks/{task_id}/rooms/{room_id}/records",
+            get(list_execution_room_records),
+        )
+        .route(
+            "/api/student/inspection-execution/qr-scans",
+            post(submit_execution_qr_scan),
+        )
+        .route(
+            "/api/student/inspection-execution/records/{id}/abnormal",
+            patch(mark_execution_record_abnormal),
         )
 }
 
@@ -336,6 +357,247 @@ async fn refresh_my_qr_token(
     Ok(data(token))
 }
 
+async fn list_execution_tasks(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    query: axum::extract::Query<Pagination>,
+) -> Result<PageJson<DormInspectionTask>, ApiError> {
+    let student_id = current_student_id(&state.db, &auth.user_id).await?;
+    ensure_inspection_executor(&state.db, &student_id).await?;
+    let pagination = pagination(query);
+    let total: i64 = sqlx::query_scalar(
+        r#"
+        SELECT count(*)
+        FROM task_assignments ta
+        INNER JOIN dorm_inspection_tasks t ON t.id = ta.task_id
+        WHERE ta.task_type = 'inspection'
+            AND ta.assignee_type = 'student'
+            AND ta.assignee_id = $1::uuid
+        "#,
+    )
+    .bind(&student_id)
+    .fetch_one(&state.db)
+    .await?;
+    let rows = sqlx::query(
+        r#"
+        SELECT t.id::text AS id, t.title, t.scope_type,
+            ARRAY(SELECT x::text FROM unnest(t.scope_ids) AS x) AS scope_ids,
+            t.scheduled_at::text AS scheduled_at, t.method, t.status,
+            t.created_by::text AS created_by, t.created_at::text AS created_at
+        FROM task_assignments ta
+        INNER JOIN dorm_inspection_tasks t ON t.id = ta.task_id
+        WHERE ta.task_type = 'inspection'
+            AND ta.assignee_type = 'student'
+            AND ta.assignee_id = $1::uuid
+        ORDER BY t.scheduled_at DESC
+        LIMIT $2 OFFSET $3
+        "#,
+    )
+    .bind(&student_id)
+    .bind(pagination.limit())
+    .bind(pagination.offset())
+    .fetch_all(&state.db)
+    .await?;
+    let items = rows
+        .into_iter()
+        .map(task_from_row)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(page(items, pagination, total))
+}
+
+async fn get_execution_task(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(task_id): Path<Id>,
+) -> Result<ApiJson<DormInspectionTask>, ApiError> {
+    let student_id = current_student_id(&state.db, &auth.user_id).await?;
+    ensure_execution_assignment(&state.db, &student_id, &task_id).await?;
+
+    Ok(data(fetch_task(&state.db, &task_id).await?))
+}
+
+async fn list_execution_room_records(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((task_id, room_id)): Path<(Id, Id)>,
+    query: axum::extract::Query<Pagination>,
+) -> Result<PageJson<DormInspectionRecord>, ApiError> {
+    let student_id = current_student_id(&state.db, &auth.user_id).await?;
+    ensure_execution_assignment(&state.db, &student_id, &task_id).await?;
+    ensure_executor_can_access_room(&state.db, &student_id, &room_id).await?;
+    let pagination = pagination(query);
+    let total: i64 = sqlx::query_scalar(
+        r#"
+        SELECT count(*)
+        FROM dorm_inspection_records
+        WHERE task_id = $1::uuid AND room_id = $2::uuid
+        "#,
+    )
+    .bind(&task_id)
+    .bind(&room_id)
+    .fetch_one(&state.db)
+    .await?;
+    let sql = record_select_sql(
+        "WHERE task_id = $1::uuid AND room_id = $2::uuid ORDER BY student_id LIMIT $3 OFFSET $4",
+    );
+    let rows = sqlx::query(&sql)
+        .bind(task_id)
+        .bind(room_id)
+        .bind(pagination.limit())
+        .bind(pagination.offset())
+        .fetch_all(&state.db)
+        .await?;
+    let items = rows
+        .into_iter()
+        .map(record_from_row)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(page(items, pagination, total))
+}
+
+async fn submit_execution_qr_scan(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Json(payload): Json<DormInspectionQrScanSubmit>,
+) -> Result<ApiJson<DormInspectionQrScan>, ApiError> {
+    let student_id = current_student_id(&state.db, &auth.user_id).await?;
+    ensure_inspection_executor(&state.db, &student_id).await?;
+    let token_hash = hash_qr_token(&payload.token);
+    let token_row = sqlx::query(
+        r#"
+        SELECT id::text AS id, task_id::text AS task_id,
+            inspection_record_id::text AS inspection_record_id,
+            student_id::text AS student_id, room_id::text AS room_id,
+            token_hash, expires_at <= now() AS expired, status
+        FROM dorm_inspection_qr_tokens
+        WHERE token_hash = $1
+        "#,
+    )
+    .bind(token_hash)
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(token_row) = token_row else {
+        let scan =
+            insert_rejected_scan_without_token(&state.db, &student_id, "QR token does not exist")
+                .await?;
+        return Ok(data(scan));
+    };
+
+    let task_id = text(&token_row, "task_id")?;
+    let record_id = text(&token_row, "inspection_record_id")?;
+    let room_id = text(&token_row, "room_id")?;
+    let qr_student_id = text(&token_row, "student_id")?;
+    let task_assignment_id = match validate_scan_allowed(
+        &state.db,
+        &student_id,
+        &task_id,
+        &record_id,
+        &room_id,
+        &qr_student_id,
+        &token_row,
+    )
+    .await
+    {
+        Ok(task_assignment_id) => task_assignment_id,
+        Err(_) => {
+            let scan = insert_rejected_scan(
+                &state.db,
+                &token_row,
+                &student_id,
+                "QR scan validation failed",
+            )
+            .await?;
+            return Ok(data(scan));
+        }
+    };
+
+    let scan_row = sqlx::query(
+        r#"
+        INSERT INTO dorm_inspection_qr_scans
+            (qr_token_id, task_assignment_id, task_id, inspection_record_id, student_id,
+             room_id, executor_type, executor_id, scan_result)
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::uuid, 'student', $7::uuid, 'accepted')
+        RETURNING id::text AS id, qr_token_id::text AS qr_token_id,
+            task_assignment_id::text AS task_assignment_id, task_id::text AS task_id,
+            inspection_record_id::text AS inspection_record_id, student_id::text AS student_id,
+            room_id::text AS room_id, executor_type, executor_id::text AS executor_id,
+            scanned_at::text AS scanned_at, scan_result, reject_reason
+        "#,
+    )
+    .bind(text(&token_row, "id")?)
+    .bind(task_assignment_id)
+    .bind(&task_id)
+    .bind(&record_id)
+    .bind(qr_student_id)
+    .bind(room_id)
+    .bind(&student_id)
+    .fetch_one(&state.db)
+    .await?;
+    let scan = scan_from_row(scan_row)?;
+
+    sqlx::query(
+        r#"
+        UPDATE dorm_inspection_records
+        SET result = 'present',
+            abnormal_reason = NULL,
+            evidence_source = 'qr_code',
+            evidence_ref_id = $2::uuid,
+            leave_request_id = NULL,
+            checked_by = $3::uuid,
+            checked_at = now()
+        WHERE id = $1::uuid AND result = 'unknown'
+        "#,
+    )
+    .bind(&record_id)
+    .bind(&scan.id)
+    .bind(&student_id)
+    .execute(&state.db)
+    .await?;
+    sqlx::query(
+        "UPDATE dorm_inspection_qr_tokens SET status = 'used', used_at = now() WHERE id = $1::uuid",
+    )
+    .bind(scan.qr_token_id.clone())
+    .execute(&state.db)
+    .await?;
+
+    Ok(data(scan))
+}
+
+async fn mark_execution_record_abnormal(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(record_id): Path<Id>,
+    Json(payload): Json<InspectionAbnormalRequest>,
+) -> Result<ApiJson<DormInspectionRecord>, ApiError> {
+    validate_non_empty(&payload.abnormal_reason, "abnormal_reason")?;
+    let student_id = current_student_id(&state.db, &auth.user_id).await?;
+    let record = fetch_record(&state.db, &record_id).await?;
+    ensure_execution_assignment(&state.db, &student_id, &record.task_id).await?;
+    ensure_executor_can_access_room(&state.db, &student_id, &record.room_id).await?;
+    sqlx::query(
+        r#"
+        UPDATE dorm_inspection_records
+        SET result = 'abnormal',
+            abnormal_reason = $2,
+            evidence_source = 'manual_abnormal',
+            evidence_ref_id = NULL,
+            leave_request_id = NULL,
+            checked_by = $3::uuid,
+            checked_at = now()
+        WHERE id = $1::uuid AND result = 'unknown'
+        "#,
+    )
+    .bind(&record_id)
+    .bind(payload.abnormal_reason.trim())
+    .bind(student_id)
+    .execute(&state.db)
+    .await?;
+
+    Ok(data(fetch_record(&state.db, &record_id).await?))
+}
+
 fn validate_task_create(payload: &DormInspectionTaskCreate) -> Result<(), ApiError> {
     validate_non_empty(&payload.title, "title")?;
     if payload.scope_ids.is_empty() {
@@ -595,6 +857,145 @@ async fn current_student_id(db: &PgPool, user_id: &str) -> Result<Id, ApiError> 
         .ok_or_else(|| ApiError::not_found("current user is not linked to a student"))
 }
 
+async fn ensure_inspection_executor(db: &PgPool, student_id: &str) -> Result<(), ApiError> {
+    let exists: bool = sqlx::query_scalar(
+        r#"
+        SELECT EXISTS (
+            SELECT 1
+            FROM student_duty_assignments
+            WHERE student_id = $1::uuid
+                AND duty_type = 'inspection_executor'
+                AND status = 'active'
+        )
+        "#,
+    )
+    .bind(student_id)
+    .fetch_one(db)
+    .await?;
+    if !exists {
+        return Err(ApiError::unauthorized(
+            "student does not have active inspection executor duty",
+        ));
+    }
+
+    Ok(())
+}
+
+async fn ensure_execution_assignment(
+    db: &PgPool,
+    student_id: &str,
+    task_id: &str,
+) -> Result<Id, ApiError> {
+    ensure_inspection_executor(db, student_id).await?;
+    let assignment_id: Option<Id> = sqlx::query_scalar(
+        r#"
+        SELECT id::text
+        FROM task_assignments
+        WHERE task_type = 'inspection'
+            AND task_id = $1::uuid
+            AND assignee_type = 'student'
+            AND assignee_id = $2::uuid
+            AND status <> 'cancelled'
+        LIMIT 1
+        "#,
+    )
+    .bind(task_id)
+    .bind(student_id)
+    .fetch_optional(db)
+    .await?;
+
+    assignment_id
+        .ok_or_else(|| ApiError::unauthorized("student is not assigned to this inspection task"))
+}
+
+async fn ensure_executor_can_access_room(
+    db: &PgPool,
+    executor_student_id: &str,
+    room_id: &str,
+) -> Result<(), ApiError> {
+    let exists: bool = sqlx::query_scalar(
+        r#"
+        SELECT EXISTS (
+            SELECT 1
+            FROM student_duty_assignments
+            WHERE student_id = $1::uuid
+                AND duty_type = 'inspection_executor'
+                AND status = 'active'
+                AND (
+                    (scope_type = 'room' AND $2::uuid = ANY(scope_ids))
+                    OR (scope_type = 'class' AND EXISTS (
+                        SELECT 1 FROM rooms r WHERE r.id = $2::uuid AND r.class_id = ANY(scope_ids)
+                    ))
+                    OR (scope_type = 'building' AND EXISTS (
+                        SELECT 1 FROM rooms r WHERE r.id = $2::uuid AND r.building_id = ANY(scope_ids)
+                    ))
+                    OR scope_type = 'task'
+                )
+        )
+        "#,
+    )
+    .bind(executor_student_id)
+    .bind(room_id)
+    .fetch_one(db)
+    .await?;
+    if !exists {
+        return Err(ApiError::unauthorized(
+            "student executor cannot access this room",
+        ));
+    }
+
+    Ok(())
+}
+
+async fn validate_scan_allowed(
+    db: &PgPool,
+    executor_student_id: &str,
+    task_id: &str,
+    record_id: &str,
+    room_id: &str,
+    qr_student_id: &str,
+    token_row: &sqlx::postgres::PgRow,
+) -> Result<Id, ApiError> {
+    let status: String = token_row.try_get("status")?;
+    if status != "active" {
+        return Err(ApiError::bad_request("QR token is not active"));
+    }
+    let expired: bool = token_row.try_get("expired")?;
+    if expired {
+        sqlx::query("UPDATE dorm_inspection_qr_tokens SET status = 'expired' WHERE id = $1::uuid")
+            .bind(text(token_row, "id")?)
+            .execute(db)
+            .await?;
+        return Err(ApiError::bad_request("QR token is expired"));
+    }
+    let task = fetch_task(db, task_id).await?;
+    if task.status != TaskStatus::Published && task.status != TaskStatus::Processing {
+        return Err(ApiError::bad_request("inspection task is not executable"));
+    }
+    let record = fetch_record(db, record_id).await?;
+    if record.result != InspectionResult::Unknown {
+        return Err(ApiError::bad_request(
+            "inspection record is no longer unknown",
+        ));
+    }
+    let active_room_id: Option<Id> = sqlx::query_scalar(
+        "SELECT room_id::text FROM accommodations WHERE student_id = $1::uuid AND status = 'active'",
+    )
+    .bind(qr_student_id)
+    .fetch_optional(db)
+    .await?;
+    if active_room_id.as_deref() != Some(room_id) {
+        return Err(ApiError::bad_request(
+            "student active accommodation does not match QR room",
+        ));
+    }
+
+    let assignment_id = ensure_execution_assignment(db, executor_student_id, task_id).await?;
+    ensure_executor_can_access_room(db, executor_student_id, room_id).await?;
+
+    Ok(assignment_id)
+}
+
 fn task_from_row(row: sqlx::postgres::PgRow) -> Result<DormInspectionTask, sqlx::Error> {
     Ok(DormInspectionTask {
         id: text(&row, "id")?,
@@ -640,6 +1041,66 @@ fn qr_token_from_row(row: sqlx::postgres::PgRow) -> Result<DormInspectionQrToken
     })
 }
 
+fn scan_from_row(row: sqlx::postgres::PgRow) -> Result<DormInspectionQrScan, sqlx::Error> {
+    Ok(DormInspectionQrScan {
+        id: text(&row, "id")?,
+        qr_token_id: text(&row, "qr_token_id")?,
+        task_assignment_id: text(&row, "task_assignment_id")?,
+        task_id: text(&row, "task_id")?,
+        inspection_record_id: text(&row, "inspection_record_id")?,
+        student_id: text(&row, "student_id")?,
+        room_id: text(&row, "room_id")?,
+        executor_type: enum_value(&row, "executor_type")?,
+        executor_id: text(&row, "executor_id")?,
+        scanned_at: text(&row, "scanned_at")?,
+        scan_result: enum_value(&row, "scan_result")?,
+        reject_reason: opt_text(&row, "reject_reason")?,
+    })
+}
+
+async fn insert_rejected_scan(
+    db: &PgPool,
+    token_row: &sqlx::postgres::PgRow,
+    executor_student_id: &str,
+    reject_reason: &str,
+) -> Result<DormInspectionQrScan, ApiError> {
+    let task_id = text(token_row, "task_id")?;
+    let assignment_id = ensure_execution_assignment(db, executor_student_id, &task_id).await?;
+    let row = sqlx::query(
+        r#"
+        INSERT INTO dorm_inspection_qr_scans
+            (qr_token_id, task_assignment_id, task_id, inspection_record_id, student_id,
+             room_id, executor_type, executor_id, scan_result, reject_reason)
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::uuid, 'student', $7::uuid, 'rejected', $8)
+        RETURNING id::text AS id, qr_token_id::text AS qr_token_id,
+            task_assignment_id::text AS task_assignment_id, task_id::text AS task_id,
+            inspection_record_id::text AS inspection_record_id, student_id::text AS student_id,
+            room_id::text AS room_id, executor_type, executor_id::text AS executor_id,
+            scanned_at::text AS scanned_at, scan_result, reject_reason
+        "#,
+    )
+    .bind(text(token_row, "id")?)
+    .bind(assignment_id)
+    .bind(task_id)
+    .bind(text(token_row, "inspection_record_id")?)
+    .bind(text(token_row, "student_id")?)
+    .bind(text(token_row, "room_id")?)
+    .bind(executor_student_id)
+    .bind(reject_reason)
+    .fetch_one(db)
+    .await?;
+
+    Ok(scan_from_row(row)?)
+}
+
+async fn insert_rejected_scan_without_token(
+    _db: &PgPool,
+    _executor_student_id: &str,
+    reject_reason: &str,
+) -> Result<DormInspectionQrScan, ApiError> {
+    Err(ApiError::bad_request(reject_reason.to_owned()))
+}
+
 fn optional_inspection_evidence(
     row: &sqlx::postgres::PgRow,
 ) -> Result<Option<InspectionEvidenceSource>, sqlx::Error> {
@@ -677,6 +1138,20 @@ fn hash_qr_token(token: &str) -> String {
 #[cfg(test)]
 fn verify_qr_token(token: &str, token_hash: &str) -> bool {
     hash_qr_token(token) == token_hash
+}
+
+#[cfg(test)]
+fn inspection_duty_matches_task(
+    duty_type: dormtk_core::StudentDutyType,
+    task_type: dormtk_core::TaskType,
+) -> bool {
+    matches!(
+        (duty_type, task_type),
+        (
+            dormtk_core::StudentDutyType::InspectionExecutor,
+            dormtk_core::TaskType::Inspection
+        )
+    )
 }
 
 #[cfg(test)]
@@ -720,5 +1195,21 @@ mod tests {
         assert!(!token_is_expired(99, 100));
         assert!(token_is_expired(100, 100));
         assert!(token_is_expired(101, 100));
+    }
+
+    #[test]
+    fn inspection_duty_matches_only_inspection_task() {
+        assert!(inspection_duty_matches_task(
+            dormtk_core::StudentDutyType::InspectionExecutor,
+            dormtk_core::TaskType::Inspection
+        ));
+        assert!(!inspection_duty_matches_task(
+            dormtk_core::StudentDutyType::HygieneExecutor,
+            dormtk_core::TaskType::Inspection
+        ));
+        assert!(!inspection_duty_matches_task(
+            dormtk_core::StudentDutyType::InspectionExecutor,
+            dormtk_core::TaskType::Hygiene
+        ));
     }
 }
