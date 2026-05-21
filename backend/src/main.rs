@@ -3,6 +3,7 @@ mod auth;
 mod basics;
 mod config;
 mod db;
+mod duties;
 mod error;
 mod http;
 mod routes;
