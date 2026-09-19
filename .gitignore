@@ -1,8 +1,15 @@
 #忽略cargo缓存
 .cargo_cache/
 #忽略构建产物
-app/target/
+target/
+backend/target/
+clients/admin-desktop/target/
 #忽略数据库数据目录
 env/dev/PostgreSQL/data/
+env/prod/PostgreSQL/data/
+#忽略本地环境变量
+.env
+env/dev/.env
+env/prod/.env
 #忽略MAC随地大小便
 .DS_Store

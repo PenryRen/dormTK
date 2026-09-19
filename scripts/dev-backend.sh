@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 set -eu
 
-podman machine start
+cd "$(dirname "$0")/../env/dev"
 podman-compose up -d --build
-podman exec -it dormTK-dev zsh

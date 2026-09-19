@@ -1,0 +1,8 @@
+[workspace]
+members = [
+  "backend",
+  "clients/admin-desktop",
+  "crates/dormtk-api-types",
+  "crates/dormtk-core",
+]
+resolver = "3"

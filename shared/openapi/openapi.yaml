@@ -1,0 +1,2992 @@
+openapi: 3.1.0
+info:
+  title: dormTK API
+  version: 0.1.0
+  description: dormTK first-stage API contract for backend, Slint admin client, and WeChat mini program.
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Health
+  - name: Admin Auth
+  - name: Admin Basics
+  - name: Admin Duties
+  - name: Admin Inspection
+  - name: Admin Check-in
+  - name: Admin Hygiene
+  - name: Admin Leave
+  - name: Admin Files
+  - name: Student
+  - name: Student Inspection Execution
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+
+  /api/auth/login:
+    post:
+      tags: [Admin Auth]
+      summary: Admin login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login succeeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponseEnvelope"
+
+  /api/admin/users:
+    get:
+      tags: [Admin Auth]
+      summary: List users
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: User page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPageResponse"
+    post:
+      tags: [Admin Auth]
+      summary: Create user
+      requestBody:
+        $ref: "#/components/requestBodies/UserCreateBody"
+      responses:
+        "200":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/admin/users/{id}:
+    get:
+      tags: [Admin Auth]
+      summary: Get user
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: User detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    patch:
+      tags: [Admin Auth]
+      summary: Update user
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/UserUpdateBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/admin/users/{id}/roles:
+    put:
+      tags: [Admin Auth]
+      summary: Replace user roles
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/RoleIdsBody"
+      responses:
+        "200":
+          description: Updated user roles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  /api/admin/roles:
+    get:
+      tags: [Admin Auth]
+      summary: List roles
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Role page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolePageResponse"
+    post:
+      tags: [Admin Auth]
+      summary: Create role
+      requestBody:
+        $ref: "#/components/requestBodies/RoleUpsertBody"
+      responses:
+        "200":
+          description: Created role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/admin/roles/{id}:
+    get:
+      tags: [Admin Auth]
+      summary: Get role
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Role detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+    patch:
+      tags: [Admin Auth]
+      summary: Update role
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/RoleUpsertBody"
+      responses:
+        "200":
+          description: Updated role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/admin/roles/{id}/permissions:
+    put:
+      tags: [Admin Auth]
+      summary: Replace role permissions
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionIdsBody"
+      responses:
+        "200":
+          description: Updated role permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+
+  /api/admin/permissions:
+    get:
+      tags: [Admin Auth]
+      summary: List permissions
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Permission page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionPageResponse"
+    post:
+      tags: [Admin Auth]
+      summary: Create permission
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionUpsertBody"
+      responses:
+        "200":
+          description: Created permission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+  /api/admin/permissions/{id}:
+    get:
+      tags: [Admin Auth]
+      summary: Get permission
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Permission detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+    patch:
+      tags: [Admin Auth]
+      summary: Update permission
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionUpsertBody"
+      responses:
+        "200":
+          description: Updated permission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionResponse"
+
+  /api/admin/import-jobs:
+    post:
+      tags: [Admin Basics]
+      summary: Reserve basic data import
+      description: P2 only reserves the API contract. CSV and Excel parsing are not implemented.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportJobCreate"
+      responses:
+        "501":
+          description: Import parsing is not implemented in P2
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/admin/students:
+    get:
+      tags: [Admin Basics]
+      summary: List students
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Student page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentPageResponse"
+    post:
+      tags: [Admin Basics]
+      summary: Create student
+      requestBody:
+        $ref: "#/components/requestBodies/StudentUpsertBody"
+      responses:
+        "200":
+          description: Created student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+  /api/admin/students/{id}:
+    get:
+      tags: [Admin Basics]
+      summary: Get student
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Student detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+    patch:
+      tags: [Admin Basics]
+      summary: Update student
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/StudentUpsertBody"
+      responses:
+        "200":
+          description: Updated student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+
+  /api/admin/classes:
+    get:
+      tags: [Admin Basics]
+      summary: List classes
+      responses:
+        "200":
+          description: Class page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassGroupPageResponse"
+    post:
+      tags: [Admin Basics]
+      summary: Create class
+      requestBody:
+        $ref: "#/components/requestBodies/ClassGroupUpsertBody"
+      responses:
+        "200":
+          description: Created class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassGroupResponse"
+  /api/admin/classes/{id}:
+    get:
+      tags: [Admin Basics]
+      summary: Get class
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Class detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassGroupResponse"
+    patch:
+      tags: [Admin Basics]
+      summary: Update class
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/ClassGroupUpsertBody"
+      responses:
+        "200":
+          description: Updated class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassGroupResponse"
+  /api/admin/classes/{id}/teachers:
+    post:
+      tags: [Admin Basics]
+      summary: Add teacher class assignment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherClassAssignmentCreate"
+      responses:
+        "200":
+          description: Created assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherClassAssignmentResponse"
+  /api/admin/classes/{id}/teachers/{teacher_id}:
+    delete:
+      tags: [Admin Basics]
+      summary: Remove teacher class assignment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - name: teacher_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Removed
+
+  /api/admin/buildings:
+    get:
+      tags: [Admin Basics]
+      summary: List buildings
+      responses:
+        "200":
+          description: Building page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildingPageResponse"
+    post:
+      tags: [Admin Basics]
+      summary: Create building
+      requestBody:
+        $ref: "#/components/requestBodies/BuildingUpsertBody"
+      responses:
+        "200":
+          description: Created building
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildingResponse"
+  /api/admin/buildings/{id}:
+    get:
+      tags: [Admin Basics]
+      summary: Get building
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Building detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildingResponse"
+    patch:
+      tags: [Admin Basics]
+      summary: Update building
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/BuildingUpsertBody"
+      responses:
+        "200":
+          description: Updated building
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildingResponse"
+
+  /api/admin/rooms:
+    get:
+      tags: [Admin Basics]
+      summary: List rooms
+      responses:
+        "200":
+          description: Room page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomPageResponse"
+    post:
+      tags: [Admin Basics]
+      summary: Create room
+      requestBody:
+        $ref: "#/components/requestBodies/RoomUpsertBody"
+      responses:
+        "200":
+          description: Created room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResponse"
+  /api/admin/rooms/{id}:
+    get:
+      tags: [Admin Basics]
+      summary: Get room
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Room detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResponse"
+    patch:
+      tags: [Admin Basics]
+      summary: Update room
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/RoomUpsertBody"
+      responses:
+        "200":
+          description: Updated room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResponse"
+
+  /api/admin/accommodations:
+    get:
+      tags: [Admin Basics]
+      summary: List accommodations
+      responses:
+        "200":
+          description: Accommodation page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccommodationPageResponse"
+    post:
+      tags: [Admin Basics]
+      summary: Create accommodation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccommodationCreate"
+      responses:
+        "200":
+          description: Created accommodation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccommodationResponse"
+  /api/admin/accommodations/{id}/checkout:
+    post:
+      tags: [Admin Basics]
+      summary: Check out accommodation
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutRequest"
+      responses:
+        "200":
+          description: Checked out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccommodationResponse"
+
+  /api/admin/student-duty-assignments:
+    get:
+      tags: [Admin Duties]
+      summary: List student duties
+      responses:
+        "200":
+          description: Duty page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDutyAssignmentPageResponse"
+    post:
+      tags: [Admin Duties]
+      summary: Create student duty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentDutyAssignmentCreate"
+      responses:
+        "200":
+          description: Created duty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDutyAssignmentResponse"
+  /api/admin/student-duty-assignments/{id}:
+    patch:
+      tags: [Admin Duties]
+      summary: Update student duty
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentDutyAssignmentUpdate"
+      responses:
+        "200":
+          description: Updated duty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDutyAssignmentResponse"
+
+  /api/admin/task-assignments:
+    get:
+      tags: [Admin Duties]
+      summary: List task assignments
+      responses:
+        "200":
+          description: Task assignment page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskAssignmentPageResponse"
+    post:
+      tags: [Admin Duties]
+      summary: Create task assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskAssignmentCreate"
+      responses:
+        "200":
+          description: Created task assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskAssignmentResponse"
+  /api/admin/task-assignments/{id}:
+    patch:
+      tags: [Admin Duties]
+      summary: Update task assignment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskAssignmentUpdate"
+      responses:
+        "200":
+          description: Updated task assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskAssignmentResponse"
+
+  /api/admin/inspection-tasks:
+    get:
+      tags: [Admin Inspection]
+      summary: List inspection tasks
+      responses:
+        "200":
+          description: Inspection task page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskPageResponse"
+    post:
+      tags: [Admin Inspection]
+      summary: Create inspection task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormInspectionTaskCreate"
+      responses:
+        "200":
+          description: Created inspection task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskResponse"
+  /api/admin/inspection-tasks/{id}:
+    get:
+      tags: [Admin Inspection]
+      summary: Get inspection task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Inspection task detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskResponse"
+    patch:
+      tags: [Admin Inspection]
+      summary: Update inspection task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormInspectionTaskUpdate"
+      responses:
+        "200":
+          description: Updated inspection task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskResponse"
+  /api/admin/inspection-tasks/{id}/publish:
+    post:
+      tags: [Admin Inspection]
+      summary: Publish inspection task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Published task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskResponse"
+  /api/admin/inspection-tasks/{id}/complete:
+    post:
+      tags: [Admin Inspection]
+      summary: Complete inspection task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Completed task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskResponse"
+  /api/admin/inspection-tasks/{task_id}/records:
+    get:
+      tags: [Admin Inspection]
+      summary: List inspection records
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Inspection record page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordPageResponse"
+  /api/admin/inspection-records/{id}/abnormal:
+    patch:
+      tags: [Admin Inspection]
+      summary: Mark inspection record abnormal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/InspectionAbnormalBody"
+      responses:
+        "200":
+          description: Updated record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordResponse"
+  /api/admin/inspection-records/{id}/present-by-evidence:
+    patch:
+      tags: [Admin Inspection]
+      summary: Mark inspection record present by verified evidence
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InspectionPresentByEvidenceRequest"
+      responses:
+        "200":
+          description: Updated record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordResponse"
+  /api/admin/inspection-records/{id}/leave:
+    patch:
+      tags: [Admin Inspection]
+      summary: Mark inspection record leave
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InspectionLeaveRequest"
+      responses:
+        "200":
+          description: Updated record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordResponse"
+  /api/admin/inspection-tasks/{task_id}/rooms/{room_id}/complete:
+    post:
+      tags: [Admin Inspection]
+      summary: Complete inspection room
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+        - $ref: "#/components/parameters/RoomId"
+      responses:
+        "200":
+          description: Room completion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRoomCompletionResponse"
+  /api/admin/inspection-appeals:
+    get:
+      tags: [Admin Inspection]
+      summary: List inspection abnormal appeals
+      responses:
+        "200":
+          description: Appeal page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionAbnormalAppealPageResponse"
+  /api/admin/inspection-appeals/{id}:
+    get:
+      tags: [Admin Inspection]
+      summary: Get inspection abnormal appeal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Appeal detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionAbnormalAppealResponse"
+  /api/admin/inspection-appeals/{id}/approve:
+    post:
+      tags: [Admin Inspection]
+      summary: Approve inspection abnormal appeal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/ReviewBody"
+      responses:
+        "200":
+          description: Appeal approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionAbnormalAppealResponse"
+  /api/admin/inspection-appeals/{id}/reject:
+    post:
+      tags: [Admin Inspection]
+      summary: Reject inspection abnormal appeal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/ReviewBody"
+      responses:
+        "200":
+          description: Appeal rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionAbnormalAppealResponse"
+
+  /api/admin/check-in-rules:
+    get:
+      tags: [Admin Check-in]
+      summary: List check-in rules
+      responses:
+        "200":
+          description: Check-in rule page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormCheckInRulePageResponse"
+    post:
+      tags: [Admin Check-in]
+      summary: Create check-in rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormCheckInRuleCreate"
+      responses:
+        "200":
+          description: Created rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormCheckInRuleResponse"
+  /api/admin/check-in-rules/{id}:
+    patch:
+      tags: [Admin Check-in]
+      summary: Update check-in rule
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormCheckInRuleUpdate"
+      responses:
+        "200":
+          description: Updated rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormCheckInRuleResponse"
+  /api/admin/rooms/{room_id}/wifi-fingerprints:
+    get:
+      tags: [Admin Check-in]
+      summary: List room WiFi fingerprints
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      responses:
+        "200":
+          description: Fingerprint page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormWifiFingerprintPageResponse"
+    post:
+      tags: [Admin Check-in]
+      summary: Create room WiFi fingerprint
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormWifiFingerprintCreate"
+      responses:
+        "200":
+          description: Created fingerprint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormWifiFingerprintResponse"
+  /api/admin/wifi-fingerprints/{id}:
+    patch:
+      tags: [Admin Check-in]
+      summary: Update WiFi fingerprint
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormWifiFingerprintUpdate"
+      responses:
+        "200":
+          description: Updated fingerprint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormWifiFingerprintResponse"
+  /api/admin/check-in-records:
+    get:
+      tags: [Admin Check-in]
+      summary: List check-in records
+      responses:
+        "200":
+          description: Check-in record page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormCheckInRecordPageResponse"
+
+  /api/admin/hygiene-score-templates:
+    get:
+      tags: [Admin Hygiene]
+      summary: List hygiene score templates
+      responses:
+        "200":
+          description: Template page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneScoreTemplatePageResponse"
+    post:
+      tags: [Admin Hygiene]
+      summary: Create hygiene score template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HygieneScoreTemplateCreate"
+      responses:
+        "200":
+          description: Created template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneScoreTemplateResponse"
+  /api/admin/hygiene-score-templates/{id}:
+    patch:
+      tags: [Admin Hygiene]
+      summary: Update hygiene score template
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HygieneScoreTemplateUpdate"
+      responses:
+        "200":
+          description: Updated template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneScoreTemplateResponse"
+  /api/admin/hygiene-score-templates/{id}/publish:
+    post:
+      tags: [Admin Hygiene]
+      summary: Publish hygiene score template
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Published template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneScoreTemplateResponse"
+  /api/admin/hygiene-tasks:
+    get:
+      tags: [Admin Hygiene]
+      summary: List hygiene tasks
+      responses:
+        "200":
+          description: Hygiene task page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneTaskPageResponse"
+    post:
+      tags: [Admin Hygiene]
+      summary: Create hygiene task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HygieneTaskCreate"
+      responses:
+        "200":
+          description: Created hygiene task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneTaskResponse"
+  /api/admin/hygiene-tasks/{id}:
+    get:
+      tags: [Admin Hygiene]
+      summary: Get hygiene task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Hygiene task detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneTaskResponse"
+    patch:
+      tags: [Admin Hygiene]
+      summary: Update hygiene task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HygieneTaskUpdate"
+      responses:
+        "200":
+          description: Updated hygiene task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneTaskResponse"
+  /api/admin/hygiene-tasks/{id}/publish:
+    post:
+      tags: [Admin Hygiene]
+      summary: Publish hygiene task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Published task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneTaskResponse"
+  /api/admin/hygiene-tasks/{task_id}/records:
+    get:
+      tags: [Admin Hygiene]
+      summary: List hygiene records
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Hygiene record page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneRecordPageResponse"
+    post:
+      tags: [Admin Hygiene]
+      summary: Create hygiene record
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HygieneRecordCreate"
+      responses:
+        "200":
+          description: Created hygiene record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneRecordResponse"
+  /api/admin/hygiene-records/{id}:
+    get:
+      tags: [Admin Hygiene]
+      summary: Get hygiene record
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Hygiene record detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneRecordResponse"
+
+  /api/admin/leave-requests:
+    get:
+      tags: [Admin Leave]
+      summary: List leave requests
+      responses:
+        "200":
+          description: Leave request page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestPageResponse"
+  /api/admin/leave-requests/{id}:
+    get:
+      tags: [Admin Leave]
+      summary: Get leave request
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Leave request detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestResponse"
+  /api/admin/leave-requests/{id}/approve:
+    post:
+      tags: [Admin Leave]
+      summary: Approve leave request
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/ReviewBody"
+      responses:
+        "200":
+          description: Leave approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestResponse"
+  /api/admin/leave-requests/{id}/reject:
+    post:
+      tags: [Admin Leave]
+      summary: Reject leave request
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/ReviewBody"
+      responses:
+        "200":
+          description: Leave rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestResponse"
+  /api/admin/leave-requests/{id}/paper-evidences:
+    post:
+      tags: [Admin Leave]
+      summary: Add paper leave evidence
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaperLeaveEvidenceCreate"
+      responses:
+        "200":
+          description: Created paper evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperLeaveEvidenceResponse"
+  /api/admin/paper-leave-evidences/{id}/verify:
+    post:
+      tags: [Admin Leave]
+      summary: Verify paper leave evidence
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Verified paper evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperLeaveEvidenceResponse"
+  /api/admin/paper-leave-evidences/{id}/reject:
+    post:
+      tags: [Admin Leave]
+      summary: Reject paper leave evidence
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Rejected paper evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperLeaveEvidenceResponse"
+
+  /api/admin/files:
+    get:
+      tags: [Admin Files]
+      summary: List files
+      responses:
+        "200":
+          description: File page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileObjectPageResponse"
+    post:
+      tags: [Admin Files]
+      summary: Upload file
+      requestBody:
+        $ref: "#/components/requestBodies/FileUploadBody"
+      responses:
+        "200":
+          description: Uploaded file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileObjectResponse"
+  /api/admin/files/{id}/mark-delete:
+    post:
+      tags: [Admin Files]
+      summary: Mark file pending delete
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: File marked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileObjectResponse"
+  /api/admin/files/cleanup-runs:
+    post:
+      tags: [Admin Files]
+      summary: Run file cleanup
+      responses:
+        "200":
+          description: Cleanup result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileCleanupRunResponse"
+  /api/admin/file-retention-policies:
+    get:
+      tags: [Admin Files]
+      summary: List file retention policies
+      responses:
+        "200":
+          description: Policy page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileRetentionPolicyPageResponse"
+    post:
+      tags: [Admin Files]
+      summary: Create file retention policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileRetentionPolicyCreate"
+      responses:
+        "200":
+          description: Created policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileRetentionPolicyResponse"
+  /api/admin/file-retention-policies/{id}:
+    patch:
+      tags: [Admin Files]
+      summary: Update file retention policy
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileRetentionPolicyUpdate"
+      responses:
+        "200":
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileRetentionPolicyResponse"
+
+  /api/student/me:
+    get:
+      tags: [Student]
+      summary: Get current student profile
+      responses:
+        "200":
+          description: Current student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentMeResponse"
+  /api/student/accommodation:
+    get:
+      tags: [Student]
+      summary: Get current student accommodation
+      responses:
+        "200":
+          description: Current accommodation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccommodationResponse"
+  /api/student/check-in/today:
+    get:
+      tags: [Student]
+      summary: Get today's check-in state
+      responses:
+        "200":
+          description: Today's check-in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormCheckInTodayResponse"
+  /api/student/check-in:
+    post:
+      tags: [Student]
+      summary: Submit daily check-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormCheckInSubmit"
+      responses:
+        "200":
+          description: Submitted check-in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormCheckInRecordResponse"
+  /api/student/leave-requests:
+    get:
+      tags: [Student]
+      summary: List my leave requests
+      responses:
+        "200":
+          description: Leave request page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestPageResponse"
+    post:
+      tags: [Student]
+      summary: Create leave request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveRequestCreate"
+      responses:
+        "200":
+          description: Created leave
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestResponse"
+  /api/student/leave-requests/{id}/withdraw:
+    post:
+      tags: [Student]
+      summary: Withdraw my leave request
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Withdrawn leave
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequestResponse"
+  /api/student/leave-requests/{id}/paper-evidences:
+    post:
+      tags: [Student]
+      summary: Upload paper evidence for my leave request
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaperLeaveEvidenceCreate"
+      responses:
+        "200":
+          description: Uploaded evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperLeaveEvidenceResponse"
+  /api/student/inspection-records:
+    get:
+      tags: [Student]
+      summary: List my inspection records
+      responses:
+        "200":
+          description: Inspection record page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordPageResponse"
+  /api/student/inspection-records/{id}/qr-token:
+    get:
+      tags: [Student]
+      summary: Create or get inspection QR token for my record
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: QR token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionQrTokenResponse"
+  /api/student/inspection-qr-tokens/{id}/refresh:
+    post:
+      tags: [Student]
+      summary: Refresh my inspection QR token
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Refreshed QR token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionQrTokenResponse"
+  /api/student/inspection-records/{id}/appeals:
+    post:
+      tags: [Student]
+      summary: Create inspection abnormal appeal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InspectionAbnormalAppealCreate"
+      responses:
+        "200":
+          description: Created appeal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionAbnormalAppealResponse"
+  /api/student/inspection-appeals/{id}/files:
+    post:
+      tags: [Student]
+      summary: Add file to inspection abnormal appeal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/FileRelationBody"
+      responses:
+        "200":
+          description: Added file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionAbnormalAppealResponse"
+  /api/student/inspection-execution/tasks:
+    get:
+      tags: [Student Inspection Execution]
+      summary: List assigned inspection execution tasks
+      responses:
+        "200":
+          description: Assigned task page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskPageResponse"
+  /api/student/inspection-execution/tasks/{task_id}:
+    get:
+      tags: [Student Inspection Execution]
+      summary: Get assigned inspection execution task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Assigned task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionTaskResponse"
+  /api/student/inspection-execution/tasks/{task_id}/rooms/{room_id}/records:
+    get:
+      tags: [Student Inspection Execution]
+      summary: List assigned room inspection records
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+        - $ref: "#/components/parameters/RoomId"
+      responses:
+        "200":
+          description: Room records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordPageResponse"
+  /api/student/inspection-execution/qr-scans:
+    post:
+      tags: [Student Inspection Execution]
+      summary: Submit inspection QR scan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DormInspectionQrScanSubmit"
+      responses:
+        "200":
+          description: QR scan result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionQrScanResponse"
+  /api/student/inspection-execution/records/{id}/abnormal:
+    patch:
+      tags: [Student Inspection Execution]
+      summary: Mark assigned inspection record abnormal
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/InspectionAbnormalBody"
+      responses:
+        "200":
+          description: Updated record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRecordResponse"
+  /api/student/inspection-execution/tasks/{task_id}/rooms/{room_id}/complete:
+    post:
+      tags: [Student Inspection Execution]
+      summary: Complete assigned inspection room
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+        - $ref: "#/components/parameters/RoomId"
+      responses:
+        "200":
+          description: Room completion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DormInspectionRoomCompletionResponse"
+  /api/student/hygiene-records:
+    get:
+      tags: [Student]
+      summary: List visible hygiene records
+      responses:
+        "200":
+          description: Hygiene record page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HygieneRecordPageResponse"
+  /api/student/files:
+    post:
+      tags: [Student]
+      summary: Upload student file
+      requestBody:
+        $ref: "#/components/requestBodies/FileUploadBody"
+      responses:
+        "200":
+          description: Uploaded file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileObjectResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+    RoomId:
+      name: room_id
+      in: path
+      required: true
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 20
+  requestBodies:
+    StudentUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StudentUpsert"
+    ClassGroupUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ClassGroupUpsert"
+    BuildingUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BuildingUpsert"
+    RoomUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RoomUpsert"
+    InspectionAbnormalBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/InspectionAbnormalRequest"
+    ReviewBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ReviewRequest"
+    FileUploadBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            $ref: "#/components/schemas/FileUploadRequest"
+    FileRelationBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FileRelationRequest"
+    UserCreateBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserCreate"
+    UserUpdateBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserUpdate"
+    RoleUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RoleUpsert"
+    PermissionUpsertBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PermissionUpsert"
+    RoleIdsBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RoleIdsRequest"
+    PermissionIdsBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PermissionIdsRequest"
+  schemas:
+    ApiResponse:
+      type: object
+      required: [data]
+      properties:
+        data: true
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    PageMeta:
+      type: object
+      required: [page, page_size, total]
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+
+    UserStatus:
+      type: string
+      enum: [active, disabled]
+    StudentDutyType:
+      type: string
+      enum: [class_monitor, inspection_executor, hygiene_executor]
+    DutyScopeType:
+      type: string
+      enum: [room, class, building, task]
+    DutyAssignmentStatus:
+      type: string
+      enum: [active, disabled]
+    TeacherClassAssignmentType:
+      type: string
+      enum: [counselor, teacher, temporary_manager]
+    TeacherClassAssignmentStatus:
+      type: string
+      enum: [active, disabled]
+    StudentStatus:
+      type: string
+      enum: [active, suspended, graduated, left]
+    Gender:
+      type: string
+      enum: [male, female]
+    BuildingGenderPolicy:
+      type: string
+      enum: [male_only, female_only, mixed]
+    DormRoomStatus:
+      type: string
+      enum: [active, disabled]
+    AccommodationStatus:
+      type: string
+      enum: [active, checked_out]
+    TaskType:
+      type: string
+      enum: [inspection, hygiene]
+    TaskStatus:
+      type: string
+      enum: [draft, published, processing, completed, cancelled]
+    TaskAssignmentStatus:
+      type: string
+      enum: [assigned, processing, completed, cancelled]
+    AssigneeType:
+      type: string
+      enum: [teacher, student]
+    ScopeType:
+      type: string
+      enum: [building, floor, room, class, student]
+    InspectionMethod:
+      type: string
+      enum: [manual_abnormal, qr_code]
+    InspectionResult:
+      type: string
+      enum: [present, abnormal, leave, unknown]
+    InspectionEvidenceSource:
+      type: string
+      enum: [check_in, qr_code, manual_abnormal, inspection_room_completed, other_verified]
+    InspectionQrTokenStatus:
+      type: string
+      enum: [active, used, expired, revoked]
+    InspectionQrScanResult:
+      type: string
+      enum: [accepted, rejected]
+    InspectionAbnormalAppealType:
+      type: string
+      enum: [leave, present]
+    InspectionAbnormalAppealStatus:
+      type: string
+      enum: [pending, approved, rejected]
+    LeaveSource:
+      type: string
+      enum: [online, paper, appeal]
+    LeaveStatus:
+      type: string
+      enum: [pending, approved, rejected, withdrawn, cancelled]
+    PaperLeaveEvidenceStatus:
+      type: string
+      enum: [uploaded, verified, rejected, voided]
+    CheckInStatus:
+      type: string
+      enum: [submitted, late, missed, rejected]
+    WifiFingerprintStatus:
+      type: string
+      enum: [active, disabled]
+    HygieneScoreTemplateStatus:
+      type: string
+      enum: [draft, published, disabled]
+    HygieneLevel:
+      type: string
+      enum: [excellent, good, passed, failed]
+    FileObjectStatus:
+      type: string
+      enum: [active, pending_delete, deleted, delete_failed]
+    FileRetentionPolicyStatus:
+      type: string
+      enum: [active, disabled]
+    FileCleanupAction:
+      type: string
+      enum: [physical_delete, archive_then_delete]
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginUser:
+      type: object
+      required: [id, username]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+    LoginResponse:
+      type: object
+      required: [access_token, user]
+      properties:
+        access_token:
+          type: string
+        user:
+          $ref: "#/components/schemas/LoginUser"
+    LoginResponseEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/LoginResponse"
+
+    User:
+      type: object
+      required: [id, username, status, role_ids, roles]
+      properties:
+        id: { type: string }
+        username: { type: string }
+        phone: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        last_login_at: { type: string, nullable: true }
+        created_at: { type: string, nullable: true }
+        updated_at: { type: string, nullable: true }
+        role_ids:
+          type: array
+          items: { type: string }
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+    UserCreate:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+        phone: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        role_ids:
+          type: array
+          items: { type: string }
+    UserUpdate:
+      type: object
+      properties:
+        username: { type: string }
+        password: { type: string }
+        phone: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+    Role:
+      type: object
+      required: [id, name, code, permission_ids, permissions]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        code: { type: string }
+        description: { type: string, nullable: true }
+        permission_ids:
+          type: array
+          items: { type: string }
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+    RoleUpsert:
+      type: object
+      required: [name, code]
+      properties:
+        name: { type: string }
+        code: { type: string }
+        description: { type: string, nullable: true }
+        permission_ids:
+          type: array
+          items: { type: string }
+    Permission:
+      type: object
+      required: [id, code]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        description: { type: string, nullable: true }
+    PermissionUpsert:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string }
+        description: { type: string, nullable: true }
+    RoleIdsRequest:
+      type: object
+      required: [role_ids]
+      properties:
+        role_ids:
+          type: array
+          items: { type: string }
+    PermissionIdsRequest:
+      type: object
+      required: [permission_ids]
+      properties:
+        permission_ids:
+          type: array
+          items: { type: string }
+    ImportJobCreate:
+      type: object
+      required: [import_type, file_object_id]
+      properties:
+        import_type:
+          type: string
+          enum: [students, classes, buildings, rooms, accommodations, duties]
+        file_object_id: { type: string }
+
+    Student:
+      type: object
+      required: [id, student_no, name, gender, class_id, status]
+      properties:
+        id: { type: string }
+        user_id: { type: string, nullable: true }
+        student_no: { type: string }
+        name: { type: string }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        phone: { type: string, nullable: true }
+        class_id: { type: string }
+        college: { type: string, nullable: true }
+        major: { type: string, nullable: true }
+        class_name: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/StudentStatus"
+        created_at: { type: string }
+        updated_at: { type: string }
+    StudentUpsert:
+      type: object
+      required: [student_no, name, gender, class_id]
+      properties:
+        student_no: { type: string }
+        name: { type: string }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        phone: { type: string, nullable: true }
+        class_id: { type: string }
+        college: { type: string, nullable: true }
+        major: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/StudentStatus"
+
+    ClassGroup:
+      type: object
+      required: [id, name, code, gender, status]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        code: { type: string }
+        college: { type: string, nullable: true }
+        major: { type: string, nullable: true }
+        grade: { type: string, nullable: true }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+    ClassGroupUpsert:
+      type: object
+      required: [name, code, gender]
+      properties:
+        name: { type: string }
+        code: { type: string }
+        college: { type: string, nullable: true }
+        major: { type: string, nullable: true }
+        grade: { type: string, nullable: true }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+
+    TeacherClassAssignment:
+      type: object
+      required: [id, teacher_id, class_id, assignment_type, status]
+      properties:
+        id: { type: string }
+        teacher_id: { type: string }
+        class_id: { type: string }
+        assignment_type:
+          $ref: "#/components/schemas/TeacherClassAssignmentType"
+        assigned_by: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/TeacherClassAssignmentStatus"
+    TeacherClassAssignmentCreate:
+      type: object
+      required: [teacher_id, assignment_type]
+      properties:
+        teacher_id: { type: string }
+        assignment_type:
+          $ref: "#/components/schemas/TeacherClassAssignmentType"
+
+    Building:
+      type: object
+      required: [id, name, code, gender_policy, status]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        code: { type: string }
+        campus: { type: string, nullable: true }
+        gender_policy:
+          $ref: "#/components/schemas/BuildingGenderPolicy"
+        status:
+          $ref: "#/components/schemas/DormRoomStatus"
+    BuildingUpsert:
+      type: object
+      required: [name, code, gender_policy]
+      properties:
+        name: { type: string }
+        code: { type: string }
+        campus: { type: string, nullable: true }
+        gender_policy:
+          $ref: "#/components/schemas/BuildingGenderPolicy"
+        status:
+          $ref: "#/components/schemas/DormRoomStatus"
+
+    Room:
+      type: object
+      required: [id, building_id, class_id, gender, room_no, capacity, status]
+      properties:
+        id: { type: string }
+        building_id: { type: string }
+        class_id: { type: string }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        room_no: { type: string }
+        floor: { type: integer }
+        capacity: { type: integer }
+        status:
+          $ref: "#/components/schemas/DormRoomStatus"
+    RoomUpsert:
+      type: object
+      required: [building_id, class_id, gender, room_no, capacity]
+      properties:
+        building_id: { type: string }
+        class_id: { type: string }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        room_no: { type: string }
+        floor: { type: integer }
+        capacity: { type: integer }
+        status:
+          $ref: "#/components/schemas/DormRoomStatus"
+
+    Accommodation:
+      type: object
+      required: [id, student_id, room_id, check_in_at, status]
+      properties:
+        id: { type: string }
+        student_id: { type: string }
+        room_id: { type: string }
+        check_in_at: { type: string }
+        check_out_at: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/AccommodationStatus"
+    AccommodationCreate:
+      type: object
+      required: [student_id, room_id, check_in_at]
+      properties:
+        student_id: { type: string }
+        room_id: { type: string }
+        check_in_at: { type: string }
+    CheckoutRequest:
+      type: object
+      properties:
+        check_out_at: { type: string, nullable: true }
+
+    StudentDutyAssignment:
+      type: object
+      required: [id, student_id, duty_type, scope_type, scope_ids, status]
+      properties:
+        id: { type: string }
+        student_id: { type: string }
+        duty_type:
+          $ref: "#/components/schemas/StudentDutyType"
+        scope_type:
+          $ref: "#/components/schemas/DutyScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        assigned_by: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/DutyAssignmentStatus"
+    StudentDutyAssignmentCreate:
+      type: object
+      required: [student_id, duty_type, scope_type, scope_ids]
+      properties:
+        student_id: { type: string }
+        duty_type:
+          $ref: "#/components/schemas/StudentDutyType"
+        scope_type:
+          $ref: "#/components/schemas/DutyScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+    StudentDutyAssignmentUpdate:
+      type: object
+      properties:
+        scope_ids:
+          type: array
+          items: { type: string }
+        status:
+          $ref: "#/components/schemas/DutyAssignmentStatus"
+
+    TaskAssignment:
+      type: object
+      required: [id, task_type, task_id, assignee_id, assignee_type, status]
+      properties:
+        id: { type: string }
+        task_type:
+          $ref: "#/components/schemas/TaskType"
+        task_id: { type: string }
+        assignee_id: { type: string }
+        assignee_type:
+          $ref: "#/components/schemas/AssigneeType"
+        duty_assignment_id: { type: string, nullable: true }
+        assigned_by: { type: string, nullable: true }
+        assigned_at: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/TaskAssignmentStatus"
+    TaskAssignmentCreate:
+      type: object
+      required: [task_type, task_id, assignee_id, assignee_type]
+      properties:
+        task_type:
+          $ref: "#/components/schemas/TaskType"
+        task_id: { type: string }
+        assignee_id: { type: string }
+        assignee_type:
+          $ref: "#/components/schemas/AssigneeType"
+        duty_assignment_id: { type: string, nullable: true }
+    TaskAssignmentUpdate:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/TaskAssignmentStatus"
+
+    DormInspectionTask:
+      type: object
+      required: [id, title, scope_type, scope_ids, scheduled_at, method, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        scope_type:
+          $ref: "#/components/schemas/ScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        scheduled_at: { type: string }
+        method:
+          $ref: "#/components/schemas/InspectionMethod"
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        created_by: { type: string, nullable: true }
+        created_at: { type: string, nullable: true }
+    DormInspectionTaskCreate:
+      type: object
+      required: [title, scope_type, scope_ids, scheduled_at, method]
+      properties:
+        title: { type: string }
+        scope_type:
+          $ref: "#/components/schemas/ScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        scheduled_at: { type: string }
+        method:
+          $ref: "#/components/schemas/InspectionMethod"
+    DormInspectionTaskUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        scheduled_at: { type: string }
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+
+    DormInspectionRecord:
+      type: object
+      required: [id, task_id, student_id, room_id, result]
+      properties:
+        id: { type: string }
+        task_id: { type: string }
+        student_id: { type: string }
+        room_id: { type: string }
+        result:
+          $ref: "#/components/schemas/InspectionResult"
+        abnormal_reason: { type: string, nullable: true }
+        evidence_source:
+          anyOf:
+            - $ref: "#/components/schemas/InspectionEvidenceSource"
+            - type: "null"
+        evidence_ref_id: { type: string, nullable: true }
+        leave_request_id: { type: string, nullable: true }
+        checked_by: { type: string, nullable: true }
+        checked_at: { type: string, nullable: true }
+    InspectionAbnormalRequest:
+      type: object
+      required: [abnormal_reason]
+      properties:
+        abnormal_reason: { type: string }
+    InspectionPresentByEvidenceRequest:
+      type: object
+      required: [evidence_source, evidence_ref_id]
+      properties:
+        evidence_source:
+          $ref: "#/components/schemas/InspectionEvidenceSource"
+        evidence_ref_id: { type: string }
+    InspectionLeaveRequest:
+      type: object
+      required: [leave_request_id]
+      properties:
+        leave_request_id: { type: string }
+
+    DormInspectionQrToken:
+      type: object
+      required: [id, task_id, inspection_record_id, student_id, room_id, token, expires_at, status]
+      properties:
+        id: { type: string }
+        task_id: { type: string }
+        inspection_record_id: { type: string }
+        student_id: { type: string }
+        room_id: { type: string }
+        token: { type: string }
+        issued_at: { type: string, nullable: true }
+        expires_at: { type: string }
+        used_at: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/InspectionQrTokenStatus"
+    DormInspectionQrScan:
+      type: object
+      required: [id, qr_token_id, task_assignment_id, task_id, inspection_record_id, student_id, room_id, executor_type, executor_id, scanned_at, scan_result]
+      properties:
+        id: { type: string }
+        qr_token_id: { type: string }
+        task_assignment_id: { type: string }
+        task_id: { type: string }
+        inspection_record_id: { type: string }
+        student_id: { type: string }
+        room_id: { type: string }
+        executor_type:
+          $ref: "#/components/schemas/AssigneeType"
+        executor_id: { type: string }
+        scanned_at: { type: string }
+        scan_result:
+          $ref: "#/components/schemas/InspectionQrScanResult"
+        reject_reason: { type: string, nullable: true }
+    DormInspectionQrScanSubmit:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    DormInspectionRoomCompletion:
+      type: object
+      required: [id, task_id, room_id, executor_id, completed_at]
+      properties:
+        id: { type: string }
+        task_id: { type: string }
+        room_id: { type: string }
+        executor_id: { type: string }
+        completed_at: { type: string }
+
+    InspectionAbnormalAppeal:
+      type: object
+      required: [id, inspection_record_id, student_id, appeal_type, reason, status, submitted_at]
+      properties:
+        id: { type: string }
+        inspection_record_id: { type: string }
+        student_id: { type: string }
+        appeal_type:
+          $ref: "#/components/schemas/InspectionAbnormalAppealType"
+        reason: { type: string }
+        status:
+          $ref: "#/components/schemas/InspectionAbnormalAppealStatus"
+        submitted_at: { type: string }
+        reviewed_by: { type: string, nullable: true }
+        reviewed_at: { type: string, nullable: true }
+        review_comment: { type: string, nullable: true }
+    InspectionAbnormalAppealCreate:
+      type: object
+      required: [appeal_type, reason]
+      properties:
+        appeal_type:
+          $ref: "#/components/schemas/InspectionAbnormalAppealType"
+        reason: { type: string }
+        file_object_ids:
+          type: array
+          items: { type: string }
+
+    DormCheckInRule:
+      type: object
+      required: [id, title, scope_type, scope_ids, starts_at_time, ends_at_time, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        scope_type:
+          $ref: "#/components/schemas/ScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        starts_at_time: { type: string }
+        ends_at_time: { type: string }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        created_by: { type: string, nullable: true }
+        created_at: { type: string, nullable: true }
+    DormCheckInRuleCreate:
+      type: object
+      required: [title, scope_type, scope_ids, starts_at_time, ends_at_time]
+      properties:
+        title: { type: string }
+        scope_type:
+          $ref: "#/components/schemas/ScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        starts_at_time: { type: string }
+        ends_at_time: { type: string }
+    DormCheckInRuleUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        starts_at_time: { type: string }
+        ends_at_time: { type: string }
+        status:
+          $ref: "#/components/schemas/UserStatus"
+    DormWifiFingerprint:
+      type: object
+      required: [id, room_id, ssid, bssid, min_signal_strength, status]
+      properties:
+        id: { type: string }
+        room_id: { type: string }
+        ssid: { type: string }
+        bssid: { type: string }
+        min_signal_strength: { type: integer }
+        status:
+          $ref: "#/components/schemas/WifiFingerprintStatus"
+    DormWifiFingerprintCreate:
+      type: object
+      required: [ssid, bssid, min_signal_strength]
+      properties:
+        ssid: { type: string }
+        bssid: { type: string }
+        min_signal_strength: { type: integer }
+    DormWifiFingerprintUpdate:
+      type: object
+      properties:
+        ssid: { type: string }
+        bssid: { type: string }
+        min_signal_strength: { type: integer }
+        status:
+          $ref: "#/components/schemas/WifiFingerprintStatus"
+    DormCheckInRecord:
+      type: object
+      required: [id, student_id, room_id, check_in_date, status]
+      properties:
+        id: { type: string }
+        rule_id: { type: string, nullable: true }
+        student_id: { type: string }
+        room_id: { type: string }
+        check_in_date: { type: string }
+        status:
+          $ref: "#/components/schemas/CheckInStatus"
+        submitted_at: { type: string, nullable: true }
+        matched_wifi_count: { type: integer, nullable: true }
+        scanned_wifi_count: { type: integer, nullable: true }
+        wifi_evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+        reject_reason: { type: string, nullable: true }
+    DormCheckInSubmit:
+      type: object
+      required: [wifi_list]
+      properties:
+        wifi_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScannedWifi"
+    ScannedWifi:
+      type: object
+      required: [ssid, bssid, signal_strength]
+      properties:
+        ssid: { type: string }
+        bssid: { type: string }
+        signal_strength: { type: integer }
+    DormCheckInToday:
+      type: object
+      properties:
+        rule:
+          anyOf:
+            - $ref: "#/components/schemas/DormCheckInRule"
+            - type: "null"
+        record:
+          anyOf:
+            - $ref: "#/components/schemas/DormCheckInRecord"
+            - type: "null"
+
+    HygieneScoreCriterion:
+      type: object
+      required: [id, template_id, item_name, max_score, sort_order]
+      properties:
+        id: { type: string }
+        template_id: { type: string }
+        item_name: { type: string }
+        max_score: { type: number }
+        sort_order: { type: integer }
+    HygieneScoreTemplate:
+      type: object
+      required: [id, name, version, status, criteria]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        version: { type: integer }
+        status:
+          $ref: "#/components/schemas/HygieneScoreTemplateStatus"
+        criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/HygieneScoreCriterion"
+    HygieneScoreTemplateCreate:
+      type: object
+      required: [name, criteria]
+      properties:
+        name: { type: string }
+        criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/HygieneScoreCriterionCreate"
+    HygieneScoreCriterionCreate:
+      type: object
+      required: [item_name, max_score, sort_order]
+      properties:
+        item_name: { type: string }
+        max_score: { type: number }
+        sort_order: { type: integer }
+    HygieneScoreTemplateUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        status:
+          $ref: "#/components/schemas/HygieneScoreTemplateStatus"
+    HygieneTask:
+      type: object
+      required: [id, title, scope_type, scope_ids, scheduled_at, score_template_id, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        scope_type:
+          $ref: "#/components/schemas/ScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        scheduled_at: { type: string }
+        score_template_id: { type: string }
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        created_by: { type: string, nullable: true }
+    HygieneTaskCreate:
+      type: object
+      required: [title, scope_type, scope_ids, scheduled_at, score_template_id]
+      properties:
+        title: { type: string }
+        scope_type:
+          $ref: "#/components/schemas/ScopeType"
+        scope_ids:
+          type: array
+          items: { type: string }
+        scheduled_at: { type: string }
+        score_template_id: { type: string }
+    HygieneTaskUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        scheduled_at: { type: string }
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+    HygieneScoreItem:
+      type: object
+      required: [criterion_id, item_name, score, max_score]
+      properties:
+        criterion_id: { type: string }
+        item_name: { type: string }
+        score: { type: number }
+        max_score: { type: number }
+        comment: { type: string, nullable: true }
+    HygienePhoto:
+      type: object
+      required: [file_object_id]
+      properties:
+        file_object_id: { type: string }
+        photo_type: { type: string, nullable: true }
+    HygieneRecord:
+      type: object
+      required: [id, task_id, room_id, total_score, checked_by, checked_at, items, photos]
+      properties:
+        id: { type: string }
+        task_id: { type: string }
+        room_id: { type: string }
+        total_score: { type: number }
+        level:
+          anyOf:
+            - $ref: "#/components/schemas/HygieneLevel"
+            - type: "null"
+        comment: { type: string, nullable: true }
+        checked_by: { type: string }
+        checked_at: { type: string }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HygieneScoreItem"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/HygienePhoto"
+    HygieneRecordCreate:
+      type: object
+      required: [room_id, items, photos]
+      properties:
+        room_id: { type: string }
+        comment: { type: string, nullable: true }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HygieneScoreItem"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/HygienePhoto"
+
+    LeaveRequest:
+      type: object
+      required: [id, student_id, leave_type, source, reason, starts_at, ends_at, status]
+      properties:
+        id: { type: string }
+        student_id: { type: string }
+        leave_type: { type: string }
+        source:
+          $ref: "#/components/schemas/LeaveSource"
+        appeal_id: { type: string, nullable: true }
+        reason: { type: string }
+        starts_at: { type: string }
+        ends_at: { type: string }
+        status:
+          $ref: "#/components/schemas/LeaveStatus"
+        submitted_at: { type: string, nullable: true }
+        reviewed_by: { type: string, nullable: true }
+        reviewed_at: { type: string, nullable: true }
+        review_comment: { type: string, nullable: true }
+    LeaveRequestCreate:
+      type: object
+      required: [leave_type, reason, starts_at, ends_at]
+      properties:
+        leave_type: { type: string }
+        reason: { type: string }
+        starts_at: { type: string }
+        ends_at: { type: string }
+    PaperLeaveEvidence:
+      type: object
+      required: [id, leave_request_id, student_id, file_object_id, status]
+      properties:
+        id: { type: string }
+        leave_request_id: { type: string }
+        student_id: { type: string }
+        file_object_id: { type: string }
+        uploaded_by: { type: string, nullable: true }
+        uploaded_at: { type: string, nullable: true }
+        verified_by: { type: string, nullable: true }
+        verified_at: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/PaperLeaveEvidenceStatus"
+    PaperLeaveEvidenceCreate:
+      type: object
+      required: [file_object_id]
+      properties:
+        file_object_id: { type: string }
+    ReviewRequest:
+      type: object
+      properties:
+        comment: { type: string, nullable: true }
+
+    FileObject:
+      type: object
+      required: [id, owner_type, file_url, file_hash, mime_type, size_bytes, storage_key, status]
+      properties:
+        id: { type: string }
+        owner_type: { type: string }
+        owner_id: { type: string, nullable: true }
+        file_url: { type: string }
+        file_hash: { type: string }
+        mime_type: { type: string }
+        size_bytes: { type: integer, format: int64 }
+        storage_key: { type: string }
+        uploaded_by: { type: string, nullable: true }
+        uploaded_at: { type: string, nullable: true }
+        retention_until: { type: string, nullable: true }
+        status:
+          $ref: "#/components/schemas/FileObjectStatus"
+        deleted_at: { type: string, nullable: true }
+        delete_error: { type: string, nullable: true }
+    FileUploadRequest:
+      type: object
+      required: [file, owner_type]
+      properties:
+        file:
+          type: string
+          format: binary
+        owner_type:
+          type: string
+        owner_id:
+          type: string
+          nullable: true
+    FileRelationRequest:
+      type: object
+      required: [file_object_id]
+      properties:
+        file_object_id: { type: string }
+    FileRetentionPolicy:
+      type: object
+      required: [id, owner_type, retention_days, audit_hold_days, cleanup_action, status]
+      properties:
+        id: { type: string }
+        owner_type: { type: string }
+        retention_days: { type: integer }
+        audit_hold_days: { type: integer }
+        cleanup_action:
+          $ref: "#/components/schemas/FileCleanupAction"
+        status:
+          $ref: "#/components/schemas/FileRetentionPolicyStatus"
+    FileRetentionPolicyCreate:
+      type: object
+      required: [owner_type, retention_days, audit_hold_days, cleanup_action]
+      properties:
+        owner_type: { type: string }
+        retention_days: { type: integer }
+        audit_hold_days: { type: integer }
+        cleanup_action:
+          $ref: "#/components/schemas/FileCleanupAction"
+    FileRetentionPolicyUpdate:
+      type: object
+      properties:
+        retention_days: { type: integer }
+        audit_hold_days: { type: integer }
+        cleanup_action:
+          $ref: "#/components/schemas/FileCleanupAction"
+        status:
+          $ref: "#/components/schemas/FileRetentionPolicyStatus"
+    FileCleanupRun:
+      type: object
+      required: [deleted_count, failed_count, released_bytes]
+      properties:
+        deleted_count: { type: integer }
+        failed_count: { type: integer }
+        released_bytes: { type: integer, format: int64 }
+
+    StudentMe:
+      type: object
+      required: [student]
+      properties:
+        student:
+          $ref: "#/components/schemas/Student"
+        accommodation:
+          anyOf:
+            - $ref: "#/components/schemas/Accommodation"
+            - type: "null"
+        duties:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentDutyAssignment"
+
+    StudentResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Student" } }
+    UserResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/User" } }
+    UserPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/User" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    RoleResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Role" } }
+    RolePageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Role" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    PermissionResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Permission" } }
+    PermissionPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Permission" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    StudentPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Student" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    ClassGroupResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/ClassGroup" } }
+    ClassGroupPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/ClassGroup" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    TeacherClassAssignmentResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/TeacherClassAssignment" } }
+    BuildingResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Building" } }
+    BuildingPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Building" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    RoomResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Room" } }
+    RoomPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Room" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    AccommodationResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/Accommodation" } }
+    AccommodationPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/Accommodation" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    StudentDutyAssignmentResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/StudentDutyAssignment" } }
+    StudentDutyAssignmentPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/StudentDutyAssignment" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    TaskAssignmentResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/TaskAssignment" } }
+    TaskAssignmentPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/TaskAssignment" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormInspectionTaskResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormInspectionTask" } }
+    DormInspectionTaskPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/DormInspectionTask" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormInspectionRecordResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormInspectionRecord" } }
+    DormInspectionRecordPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/DormInspectionRecord" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormInspectionQrTokenResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormInspectionQrToken" } }
+    DormInspectionQrScanResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormInspectionQrScan" } }
+    DormInspectionRoomCompletionResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormInspectionRoomCompletion" } }
+    InspectionAbnormalAppealResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/InspectionAbnormalAppeal" } }
+    InspectionAbnormalAppealPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/InspectionAbnormalAppeal" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormCheckInRuleResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormCheckInRule" } }
+    DormCheckInRulePageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/DormCheckInRule" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormWifiFingerprintResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormWifiFingerprint" } }
+    DormWifiFingerprintPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/DormWifiFingerprint" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormCheckInRecordResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormCheckInRecord" } }
+    DormCheckInRecordPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/DormCheckInRecord" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    DormCheckInTodayResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/DormCheckInToday" } }
+    HygieneScoreTemplateResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/HygieneScoreTemplate" } }
+    HygieneScoreTemplatePageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/HygieneScoreTemplate" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    HygieneTaskResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/HygieneTask" } }
+    HygieneTaskPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/HygieneTask" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    HygieneRecordResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/HygieneRecord" } }
+    HygieneRecordPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/HygieneRecord" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    LeaveRequestResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/LeaveRequest" } }
+    LeaveRequestPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/LeaveRequest" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    PaperLeaveEvidenceResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/PaperLeaveEvidence" } }
+    FileObjectResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/FileObject" } }
+    FileObjectPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/FileObject" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    FileRetentionPolicyResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/FileRetentionPolicy" } }
+    FileRetentionPolicyPageResponse:
+      type: object
+      required: [data, meta]
+      properties: { data: { type: array, items: { $ref: "#/components/schemas/FileRetentionPolicy" } }, meta: { $ref: "#/components/schemas/PageMeta" } }
+    FileCleanupRunResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/FileCleanupRun" } }
+    StudentMeResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: "#/components/schemas/StudentMe" } }

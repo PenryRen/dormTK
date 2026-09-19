@@ -1,0 +1,9 @@
+app_host = "0.0.0.0"
+app_port = 8080
+db_host = "db"
+db_port = 5432
+db_name = "dormtk"
+db_user = "dormtk"
+db_password = "dormtk"
+jwt_secret = "dev-only-change-me"
+jwt_expiration_seconds = 86400

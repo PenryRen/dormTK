@@ -3,24 +3,32 @@ version: "3.9"
 services:
   dormtk-prod:
     build:
-      context: ./rust
-      dockerfile: containerfile
+      context: ../..
+      dockerfile: env/prod/backend/Containerfile
     container_name: dormTK-prod
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "8080:8080"
+    depends_on:
+      - db
 
   db:
     image: postgres:15
     container_name: postgres-prod
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./PostgreSQL/init.sql:/docker-entrypoint-initdb.d:ro
+      - ./PostgreSQL/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
 volumes:
-  - pgdata
+  pgdata:
